@@ -86,11 +86,12 @@
 /* #undef VTK_BUILD_SHARED_LIBS */
 
 /* Whether vtkIdType is a 64-bit integer type (or a 32-bit integer type).  */
+#ifdef __MINGW64__
 #define VTK_USE_64BIT_IDS
+#endif
 
 /* Whether MTime should use a 64-bit integer type on 32 bit builds.  */
 /* #undef VTK_USE_64BIT_TIMESTAMPS */
-
 #include "vtkVersionMacros.h" // removed by VTK_LEGACY_REMOVE
 
 /* C++ compiler used.  */
