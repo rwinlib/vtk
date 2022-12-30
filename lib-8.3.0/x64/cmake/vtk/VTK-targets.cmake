@@ -16,7 +16,7 @@ set(CMAKE_IMPORT_FILE_VERSION 1)
 set(_targetsDefined)
 set(_targetsNotDefined)
 set(_expectedTargets)
-foreach(_expectedTarget VTK::kwiml VTK::vtksys VTK::utf8 VTK::CommonCore VTK::CommonMath VTK::CommonTransforms VTK::CommonMisc VTK::CommonSystem VTK::CommonDataModel VTK::CommonExecutionModel VTK::doubleconversion VTK::lz4 VTK::lzma VTK::zlib VTK::IOCore VTK::expat VTK::IOXMLParser VTK::IOXML VTK::IOLegacy)
+foreach(_expectedTarget VTK::vtkbuild VTK::kwiml VTK::vtksys VTK::utf8 VTK::CommonCore VTK::CommonCore-private-kit-links VTK::kissfft VTK::CommonMath VTK::CommonTransforms VTK::exprtk VTK::CommonMisc VTK::CommonSystem VTK::CommonSystem-private-kit-links VTK::pugixml VTK::CommonDataModel VTK::CommonExecutionModel VTK::doubleconversion VTK::lz4 VTK::lzma VTK::zlib VTK::IOCore VTK::expat VTK::IOXMLParser VTK::IOXML VTK::IOLegacy)
   list(APPEND _expectedTargets ${_expectedTarget})
   if(NOT TARGET ${_expectedTarget})
     list(APPEND _targetsNotDefined ${_expectedTarget})
@@ -50,6 +50,9 @@ if(_IMPORT_PREFIX STREQUAL "/")
   set(_IMPORT_PREFIX "")
 endif()
 
+# Create imported target VTK::vtkbuild
+add_library(VTK::vtkbuild INTERFACE IMPORTED)
+
 # Create imported target VTK::kwiml
 add_library(VTK::kwiml INTERFACE IMPORTED)
 
@@ -81,7 +84,24 @@ add_library(VTK::CommonCore STATIC IMPORTED)
 set_target_properties(VTK::CommonCore PROPERTIES
   INTERFACE_COMPILE_FEATURES "cxx_std_11"
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk"
-  INTERFACE_LINK_LIBRARIES "-lgdi32;VTK::kwiml;VTK::vtksys;\$<LINK_ONLY:VTK::utf8>;Threads::Threads;\$<LINK_ONLY:\$<\$<PLATFORM_ID:SunOS>:socket>>;\$<LINK_ONLY:\$<\$<PLATFORM_ID:SunOS>:nsl>>;\$<LINK_ONLY:\$<\$<PLATFORM_ID:Android>:log>>"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>;VTK::kwiml;VTK::vtksys;\$<LINK_ONLY:VTK::utf8>;Threads::Threads;\$<LINK_ONLY:\$<\$<PLATFORM_ID:SunOS>:socket>>;\$<LINK_ONLY:\$<\$<PLATFORM_ID:SunOS>:nsl>>;\$<LINK_ONLY:\$<\$<PLATFORM_ID:Android>:log>>"
+)
+
+# Create imported target VTK::CommonCore-private-kit-links
+add_library(VTK::CommonCore-private-kit-links INTERFACE IMPORTED)
+
+set_target_properties(VTK::CommonCore-private-kit-links PROPERTIES
+  INTERFACE_LINK_LIBRARIES "\$<LINK_ONLY:\$<\$<PLATFORM_ID:SunOS>:socket>>;\$<LINK_ONLY:\$<\$<PLATFORM_ID:SunOS>:nsl>>;\$<LINK_ONLY:\$<\$<PLATFORM_ID:Android>:log>>"
+)
+
+# Create imported target VTK::kissfft
+add_library(VTK::kissfft STATIC IMPORTED)
+
+set_target_properties(VTK::kissfft PROPERTIES
+  INTERFACE_COMPILE_DEFINITIONS "kiss_fft_scalar=double"
+  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk;${_IMPORT_PREFIX}/include/vtk/"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>"
+  INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "include/vtk/"
 )
 
 # Create imported target VTK::CommonMath
@@ -89,7 +109,7 @@ add_library(VTK::CommonMath STATIC IMPORTED)
 
 set_target_properties(VTK::CommonMath PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk"
-  INTERFACE_LINK_LIBRARIES "-lgdi32;VTK::CommonCore"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>;VTK::CommonCore;VTK::kissfft"
 )
 
 # Create imported target VTK::CommonTransforms
@@ -97,7 +117,15 @@ add_library(VTK::CommonTransforms STATIC IMPORTED)
 
 set_target_properties(VTK::CommonTransforms PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk"
-  INTERFACE_LINK_LIBRARIES "-lgdi32;VTK::CommonCore;VTK::CommonMath;\$<LINK_ONLY:VTK::vtksys>"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>;VTK::CommonCore;VTK::CommonMath;\$<LINK_ONLY:VTK::vtksys>"
+)
+
+# Create imported target VTK::exprtk
+add_library(VTK::exprtk INTERFACE IMPORTED)
+
+set_target_properties(VTK::exprtk PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk/"
+  INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "include/vtk/"
 )
 
 # Create imported target VTK::CommonMisc
@@ -105,7 +133,7 @@ add_library(VTK::CommonMisc STATIC IMPORTED)
 
 set_target_properties(VTK::CommonMisc PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk"
-  INTERFACE_LINK_LIBRARIES "-lgdi32;VTK::CommonCore;VTK::CommonMath;\$<LINK_ONLY:VTK::vtksys>"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>;VTK::CommonCore;VTK::CommonMath;\$<LINK_ONLY:VTK::vtksys>;\$<LINK_ONLY:VTK::exprtk>"
 )
 
 # Create imported target VTK::CommonSystem
@@ -113,7 +141,24 @@ add_library(VTK::CommonSystem STATIC IMPORTED)
 
 set_target_properties(VTK::CommonSystem PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk"
-  INTERFACE_LINK_LIBRARIES "-lgdi32;VTK::CommonCore;\$<LINK_ONLY:VTK::vtksys>;\$<LINK_ONLY:\$<\$<PLATFORM_ID:WIN32>:wsock32>>;\$<LINK_ONLY:Threads::Threads>"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>;VTK::CommonCore;\$<LINK_ONLY:VTK::vtksys>;\$<LINK_ONLY:\$<\$<PLATFORM_ID:WIN32>:wsock32>>;\$<LINK_ONLY:Threads::Threads>"
+)
+
+# Create imported target VTK::CommonSystem-private-kit-links
+add_library(VTK::CommonSystem-private-kit-links INTERFACE IMPORTED)
+
+set_target_properties(VTK::CommonSystem-private-kit-links PROPERTIES
+  INTERFACE_LINK_LIBRARIES "\$<LINK_ONLY:\$<\$<PLATFORM_ID:WIN32>:wsock32>>;\$<LINK_ONLY:Threads::Threads>"
+)
+
+# Create imported target VTK::pugixml
+add_library(VTK::pugixml STATIC IMPORTED)
+
+set_target_properties(VTK::pugixml PROPERTIES
+  INTERFACE_COMPILE_FEATURES "cxx_std_11"
+  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk;${_IMPORT_PREFIX}/include/vtk/"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>"
+  INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "include/vtk/"
 )
 
 # Create imported target VTK::CommonDataModel
@@ -121,7 +166,7 @@ add_library(VTK::CommonDataModel STATIC IMPORTED)
 
 set_target_properties(VTK::CommonDataModel PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk"
-  INTERFACE_LINK_LIBRARIES "-lgdi32;VTK::CommonCore;VTK::CommonMath;VTK::CommonTransforms;\$<LINK_ONLY:VTK::CommonMisc>;\$<LINK_ONLY:VTK::CommonSystem>;\$<LINK_ONLY:VTK::vtksys>"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>;VTK::CommonCore;VTK::CommonMath;VTK::CommonTransforms;\$<LINK_ONLY:VTK::CommonMisc>;\$<LINK_ONLY:VTK::CommonSystem>;\$<LINK_ONLY:VTK::pugixml>;\$<LINK_ONLY:VTK::vtksys>"
 )
 
 # Create imported target VTK::CommonExecutionModel
@@ -129,7 +174,7 @@ add_library(VTK::CommonExecutionModel STATIC IMPORTED)
 
 set_target_properties(VTK::CommonExecutionModel PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk"
-  INTERFACE_LINK_LIBRARIES "-lgdi32;VTK::CommonCore;VTK::CommonDataModel;\$<LINK_ONLY:VTK::CommonMisc>;\$<LINK_ONLY:VTK::CommonSystem>"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>;VTK::CommonCore;VTK::CommonDataModel;\$<LINK_ONLY:VTK::CommonMisc>;\$<LINK_ONLY:VTK::CommonSystem>"
 )
 
 # Create imported target VTK::doubleconversion
@@ -137,7 +182,7 @@ add_library(VTK::doubleconversion STATIC IMPORTED)
 
 set_target_properties(VTK::doubleconversion PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk;${_IMPORT_PREFIX}/include/vtk/"
-  INTERFACE_LINK_LIBRARIES "-lgdi32"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>"
   INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "include/vtk/"
 )
 
@@ -146,7 +191,7 @@ add_library(VTK::lz4 STATIC IMPORTED)
 
 set_target_properties(VTK::lz4 PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk;${_IMPORT_PREFIX}/include/vtk/"
-  INTERFACE_LINK_LIBRARIES "-lgdi32"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>"
   INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "include/vtk/"
 )
 
@@ -155,7 +200,7 @@ add_library(VTK::lzma STATIC IMPORTED)
 
 set_target_properties(VTK::lzma PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk;${_IMPORT_PREFIX}/include/vtk/"
-  INTERFACE_LINK_LIBRARIES "-lgdi32"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>"
   INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "include/vtk/"
 )
 
@@ -164,7 +209,7 @@ add_library(VTK::zlib STATIC IMPORTED)
 
 set_target_properties(VTK::zlib PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk;${_IMPORT_PREFIX}/include/vtk/"
-  INTERFACE_LINK_LIBRARIES "-lgdi32"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>"
   INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "include/vtk/"
 )
 
@@ -173,7 +218,7 @@ add_library(VTK::IOCore STATIC IMPORTED)
 
 set_target_properties(VTK::IOCore PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk"
-  INTERFACE_LINK_LIBRARIES "-lgdi32;VTK::CommonCore;VTK::CommonExecutionModel;\$<LINK_ONLY:VTK::CommonDataModel>;\$<LINK_ONLY:VTK::CommonMisc>;\$<LINK_ONLY:VTK::doubleconversion>;\$<LINK_ONLY:VTK::lz4>;\$<LINK_ONLY:VTK::lzma>;\$<LINK_ONLY:VTK::utf8>;\$<LINK_ONLY:VTK::vtksys>;\$<LINK_ONLY:VTK::zlib>"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>;VTK::CommonCore;VTK::CommonExecutionModel;\$<LINK_ONLY:VTK::CommonDataModel>;\$<LINK_ONLY:VTK::CommonMisc>;\$<LINK_ONLY:VTK::doubleconversion>;\$<LINK_ONLY:VTK::lz4>;\$<LINK_ONLY:VTK::lzma>;\$<LINK_ONLY:VTK::utf8>;\$<LINK_ONLY:VTK::vtksys>;\$<LINK_ONLY:VTK::zlib>"
 )
 
 # Create imported target VTK::expat
@@ -181,7 +226,7 @@ add_library(VTK::expat STATIC IMPORTED)
 
 set_target_properties(VTK::expat PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk;${_IMPORT_PREFIX}/include/vtk/"
-  INTERFACE_LINK_LIBRARIES "-lgdi32"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>"
   INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "include/vtk/"
 )
 
@@ -190,7 +235,7 @@ add_library(VTK::IOXMLParser STATIC IMPORTED)
 
 set_target_properties(VTK::IOXMLParser PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk"
-  INTERFACE_LINK_LIBRARIES "-lgdi32;VTK::CommonCore;VTK::CommonDataModel;\$<LINK_ONLY:VTK::IOCore>;\$<LINK_ONLY:VTK::expat>;\$<LINK_ONLY:VTK::vtksys>"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>;VTK::CommonCore;VTK::CommonDataModel;\$<LINK_ONLY:VTK::IOCore>;\$<LINK_ONLY:VTK::expat>;\$<LINK_ONLY:VTK::vtksys>"
 )
 
 # Create imported target VTK::IOXML
@@ -198,7 +243,7 @@ add_library(VTK::IOXML STATIC IMPORTED)
 
 set_target_properties(VTK::IOXML PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk"
-  INTERFACE_LINK_LIBRARIES "-lgdi32;VTK::CommonCore;VTK::CommonExecutionModel;VTK::IOXMLParser;\$<LINK_ONLY:VTK::CommonDataModel>;\$<LINK_ONLY:VTK::CommonMisc>;\$<LINK_ONLY:VTK::CommonSystem>;\$<LINK_ONLY:VTK::IOCore>;\$<LINK_ONLY:VTK::vtksys>"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>;VTK::CommonCore;VTK::CommonExecutionModel;VTK::IOXMLParser;\$<LINK_ONLY:VTK::CommonDataModel>;\$<LINK_ONLY:VTK::CommonMisc>;\$<LINK_ONLY:VTK::CommonSystem>;\$<LINK_ONLY:VTK::IOCore>;\$<LINK_ONLY:VTK::vtksys>"
 )
 
 # Create imported target VTK::IOLegacy
@@ -206,7 +251,7 @@ add_library(VTK::IOLegacy STATIC IMPORTED)
 
 set_target_properties(VTK::IOLegacy PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/vtk"
-  INTERFACE_LINK_LIBRARIES "-lgdi32;VTK::CommonCore;VTK::CommonDataModel;VTK::CommonExecutionModel;VTK::IOCore;\$<LINK_ONLY:VTK::CommonMisc>;\$<LINK_ONLY:VTK::vtksys>"
+  INTERFACE_LINK_LIBRARIES "-lgdi32;\$<LINK_ONLY:VTK::vtkbuild>;VTK::CommonCore;VTK::CommonDataModel;VTK::CommonExecutionModel;VTK::IOCore;\$<LINK_ONLY:VTK::CommonMisc>;\$<LINK_ONLY:VTK::vtksys>"
 )
 
 if(CMAKE_VERSION VERSION_LESS 3.0.0)

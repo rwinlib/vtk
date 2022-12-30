@@ -83,8 +83,10 @@ public:
    */
   void SetDataSetFrom(vtkDataObjectTreeIterator* iter, vtkDataObject* dataObj);
 
+  // Needed because, otherwise vtkCompositeData::GetDataSet(unsigned int flatIndex) is hidden.
+  using Superclass::GetDataSet;
   /**
-   * Returns the dataset located at the positiong pointed by the iterator.
+   * Returns the dataset located at the position pointed by the iterator.
    * The iterator does not need to be iterating over this dataset itself. It can
    * be an iterator for composite dataset with similar structure (achieved by
    * using CopyStructure).
@@ -120,13 +122,14 @@ public:
    */
   void Initialize() override;
 
-  //@{
+  ///@{
   /**
    * Shallow and Deep copy.
    */
   void ShallowCopy(vtkDataObject* src) override;
   void DeepCopy(vtkDataObject* src) override;
-  //@}
+  void RecursiveShallowCopy(vtkDataObject* src) override;
+  ///@}
 
   /**
    * Returns the total number of points of all blocks. This will
@@ -142,13 +145,18 @@ public:
    */
   vtkIdType GetNumberOfCells() override;
 
-  //@{
+  ///@{
   /**
    * Retrieve an instance of this class from an information object.
    */
   static vtkDataObjectTree* GetData(vtkInformation* info);
   static vtkDataObjectTree* GetData(vtkInformationVector* v, int i = 0);
-  //@}
+  ///@}
+
+  /**
+   * Overridden to return `VTK_DATA_OBJECT_TREE`.
+   */
+  int GetDataObjectType() override { return VTK_DATA_OBJECT_TREE; }
 
 protected:
   vtkDataObjectTree();
@@ -178,7 +186,7 @@ protected:
   /**
    * Returns a child dataset at a given index.
    */
-  vtkDataObject* GetChild(unsigned int num);
+  vtkDataObject* GetChild(unsigned int index);
 
   /**
    * Returns the meta-data at a given index. If the index is valid, however, no
@@ -197,6 +205,14 @@ protected:
    * Returns 1 is present, 0 otherwise.
    */
   int HasChildMetaData(unsigned int index);
+
+  /**
+   * When copying structure from another vtkDataObjectTree, this method gets
+   * called for create a new non-leaf for the `other` node. Subclasses can
+   * override this to create a different type of vtkDataObjectTree subclass, if
+   * appropriate. Default implementation, simply calls `NewInstance` on other;
+   */
+  virtual vtkDataObjectTree* CreateForCopyStructure(vtkDataObjectTree* other);
 
   // The internal datastructure. Subclasses need not access this directly.
   vtkDataObjectTreeInternals* Internals;

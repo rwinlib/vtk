@@ -42,13 +42,13 @@ public:
    * name, a location and a required length. This method is provided for
    * wrappers. Use the constructor directly from C++ instead.
    */
-  static vtkInformationIntegerVectorKey* MakeKey(
+  static VTK_NEWINSTANCE vtkInformationIntegerVectorKey* MakeKey(
     const char* name, const char* location, int length = -1)
   {
     return new vtkInformationIntegerVectorKey(name, location, length);
   }
 
-  //@{
+  ///@{
   /**
    * Get/Set the value associated with this key in the given
    * information object.
@@ -60,7 +60,7 @@ public:
   int Get(vtkInformation* info, int idx);
   void Get(vtkInformation* info, int* value);
   int Length(vtkInformation* info);
-  //@}
+  ///@}
 
   /**
    * Copy the entry associated with this key from one information

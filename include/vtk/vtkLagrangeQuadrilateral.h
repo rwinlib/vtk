@@ -47,10 +47,10 @@ public:
   vtkCell* GetEdge(int edgeId) override;
   void InterpolateFunctions(const double pcoords[3], double* weights) override;
   void InterpolateDerivs(const double pcoords[3], double* derivs) override;
-  virtual vtkHigherOrderCurve* getEdgeCell() override;
+  vtkHigherOrderCurve* GetEdgeCell() override;
 
 protected:
-  // The verion of GetApproximateQuad between Lagrange and Bezier is different because Bezier is
+  // The version of GetApproximateQuad between Lagrange and Bezier is different because Bezier is
   // non-interpolatory
   vtkQuad* GetApproximateQuad(
     int subId, vtkDataArray* scalarsIn = nullptr, vtkDataArray* scalarsOut = nullptr) override;

@@ -68,7 +68,7 @@
 
 #include "vtkDataArray.h"
 
-#include "vtkConfigure.h"
+#include "vtkCompiler.h" // for VTK_USE_EXTERN_TEMPLATE
 #include "vtkGenericDataArrayLookupHelper.h"
 #include "vtkSmartPointer.h"
 #include "vtkTypeTraits.h"
@@ -173,7 +173,7 @@ public:
     static_cast<DerivedT*>(this)->SetTypedComponent(tupleIdx, compIdx, value);
   }
 
-  //@{
+  ///@{
   /**
    * Default implementation raises a runtime error. If subclasses keep on
    * supporting this API, they should override this method.
@@ -185,7 +185,7 @@ public:
   void SetArrayFreeFunction(void (*callback)(void*)) override;
   void* WriteVoidPointer(vtkIdType valueIdx, vtkIdType numValues) override;
   ValueType* WritePointer(vtkIdType valueIdx, vtkIdType numValues);
-  //@}
+  ///@}
 
   /**
    * Removes a tuple at the given index. Default implementation
@@ -221,14 +221,23 @@ public:
    */
   void InsertTypedComponent(vtkIdType tupleIdx, int compIdx, ValueType val);
 
-  //@{
+  ///@{
   /**
    * Get the range of array values for the given component in the
    * native data type.
+   *
+   * The optional `ghosts` array is used to skip values when computing the range.
+   * Values whose associated ghost matches types from `ghostsToSkip` are skipped.
+   * See `vtkDataSetAttributes` for a definition of ghosts.
+   *
+   * @sa
+   * vtkDataSetAttributes
    */
+  void GetValueRange(
+    ValueType range[2], int comp, const unsigned char* ghosts, unsigned char ghostsToSkip = 0xff);
   void GetValueRange(ValueType range[2], int comp);
   ValueType* GetValueRange(int comp) VTK_SIZEHINT(2);
-  //@}
+  ///@}
 
   /**
    * Get the range of array values for the 0th component in the
@@ -242,6 +251,8 @@ public:
    * only consider finite values.
    * @{
    */
+  void GetFiniteValueRange(
+    ValueType range[2], int comp, const unsigned char* ghosts, unsigned char ghostsToSkip = 0xff);
   void GetFiniteValueRange(ValueType range[2], int comp);
   ValueType* GetFiniteValueRange(int comp) VTK_SIZEHINT(2);
   ValueType* GetFiniteValueRange() VTK_SIZEHINT(2) { return this->GetFiniteValueRange(0); }
@@ -285,6 +296,8 @@ public:
     this->Superclass::SetTuple(tupleIdx, tuple);
   }
 
+  void InsertTuplesStartingAt(
+    vtkIdType dstStart, vtkIdList* srcIds, vtkAbstractArray* source) override;
   void InsertTuples(vtkIdList* dstIds, vtkIdList* srcIds, vtkAbstractArray* source) override;
   // MSVC doesn't like 'using' here (error C2487). Just forward instead:
   // using Superclass::InsertTuples;
@@ -358,7 +371,8 @@ protected:
    * to the range argument.
    * THIS METHOD IS NOT THREAD SAFE.
    */
-  void ComputeValueRange(ValueType range[2], int comp);
+  void ComputeValueRange(
+    ValueType range[2], int comp, const unsigned char* ghosts, unsigned char ghostsToSkip = 0xff);
 
   /**
    * Compute the range for a specific component. If comp is set -1
@@ -367,7 +381,8 @@ protected:
    * to the range argument.
    * THIS METHOD IS NOT THREAD SAFE.
    */
-  void ComputeFiniteValueRange(ValueType range[2], int comp);
+  void ComputeFiniteValueRange(
+    ValueType range[2], int comp, const unsigned char* ghosts, unsigned char ghostsToSkip = 0xff);
 
   /**
    * Computes the range for each component of an array, the length
@@ -375,13 +390,15 @@ protected:
    * Returns true if the range was computed. Will return false
    * if you try to compute the range of an array of length zero.
    */
-  bool ComputeScalarValueRange(ValueType* ranges);
+  bool ComputeScalarValueRange(
+    ValueType* ranges, const unsigned char* ghosts, unsigned char ghostsToSkip = 0xff);
 
   /**
    * Returns true if the range was computed. Will return false
    * if you try to compute the range of an array of length zero.
    */
-  bool ComputeVectorValueRange(ValueType range[2]);
+  bool ComputeVectorValueRange(
+    ValueType range[2], const unsigned char* ghosts, unsigned char ghostsToSkip = 0xff);
 
   /**
    * Computes the range for each component of an array, the length
@@ -389,13 +406,15 @@ protected:
    * Returns true if the range was computed. Will return false
    * if you try to compute the range of an array of length zero.
    */
-  bool ComputeFiniteScalarValueRange(ValueType* ranges);
+  bool ComputeFiniteScalarValueRange(
+    ValueType* ranges, const unsigned char* ghosts, unsigned char ghostsToSkip = 0xff);
 
   /**
    * Returns true if the range was computed. Will return false
    * if you try to compute the range of an array of length zero.
    */
-  bool ComputeFiniteVectorValueRange(ValueType range[2]);
+  bool ComputeFiniteVectorValueRange(
+    ValueType range[2], const unsigned char* ghosts, unsigned char ghostsToSkip = 0xff);
 
   std::vector<double> LegacyTuple;
   std::vector<ValueType> LegacyValueRange;
@@ -412,11 +431,13 @@ private:
 namespace vtkDataArrayPrivate
 {
 template <typename A, typename R, typename T>
-bool DoComputeScalarRange(A*, R*, T);
+bool DoComputeScalarRange(A*, R*, T, const unsigned char* ghosts, unsigned char ghostsToSkip);
 template <typename A, typename R>
-bool DoComputeVectorRange(A*, R[2], AllValues);
+bool DoComputeVectorRange(
+  A*, R[2], AllValues, const unsigned char* ghosts, unsigned char ghostsToSkip);
 template <typename A, typename R>
-bool DoComputeVectorRange(A*, R[2], FiniteValues);
+bool DoComputeVectorRange(
+  A*, R[2], FiniteValues, const unsigned char* ghosts, unsigned char ghostsToSkip);
 } // namespace vtkDataArrayPrivate
 
 #include "vtkGenericDataArray.txx"
@@ -466,13 +487,13 @@ class vtkScaledSOADataArrayTemplate;
 
 #define VTK_INSTANTIATE_VALUERANGE_ARRAYTYPE(ArrayType, ValueType)                                 \
   template VTKCOMMONCORE_EXPORT bool DoComputeScalarRange(                                         \
-    ArrayType*, ValueType*, vtkDataArrayPrivate::AllValues);                                       \
-  template VTKCOMMONCORE_EXPORT bool DoComputeScalarRange(                                         \
-    ArrayType*, ValueType*, vtkDataArrayPrivate::FiniteValues);                                    \
-  template VTKCOMMONCORE_EXPORT bool DoComputeVectorRange(                                         \
-    ArrayType*, ValueType[2], vtkDataArrayPrivate::AllValues);                                     \
-  template VTKCOMMONCORE_EXPORT bool DoComputeVectorRange(                                         \
-    ArrayType*, ValueType[2], vtkDataArrayPrivate::FiniteValues);
+    ArrayType*, ValueType*, vtkDataArrayPrivate::AllValues, const unsigned char*, unsigned char);  \
+  template VTKCOMMONCORE_EXPORT bool DoComputeScalarRange(ArrayType*, ValueType*,                  \
+    vtkDataArrayPrivate::FiniteValues, const unsigned char*, unsigned char);                       \
+  template VTKCOMMONCORE_EXPORT bool DoComputeVectorRange(ArrayType*, ValueType[2],                \
+    vtkDataArrayPrivate::AllValues, const unsigned char*, unsigned char);                          \
+  template VTKCOMMONCORE_EXPORT bool DoComputeVectorRange(ArrayType*, ValueType[2],                \
+    vtkDataArrayPrivate::FiniteValues, const unsigned char*, unsigned char);
 
 #ifdef VTK_USE_SCALED_SOA_ARRAYS
 
@@ -514,22 +535,24 @@ class vtkScaledSOADataArrayTemplate;
 namespace vtkDataArrayPrivate
 {
 template <typename A, typename R, typename T>
-bool DoComputeScalarRange(A*, R*, T);
+bool DoComputeScalarRange(A*, R*, T, const unsigned char* ghosts, unsigned char ghostsToSkip);
 template <typename A, typename R>
-bool DoComputeVectorRange(A*, R[2], AllValues);
+bool DoComputeVectorRange(
+  A*, R[2], AllValues, const unsigned char* ghosts, unsigned char ghostsToSkip);
 template <typename A, typename R>
-bool DoComputeVectorRange(A*, R[2], FiniteValues);
+bool DoComputeVectorRange(
+  A*, R[2], FiniteValues, const unsigned char* ghosts, unsigned char ghostsToSkip);
 } // namespace vtkDataArrayPrivate
 
 #define VTK_DECLARE_VALUERANGE_ARRAYTYPE(ArrayType, ValueType)                                     \
   extern template VTKCOMMONCORE_EXPORT bool DoComputeScalarRange(                                  \
-    ArrayType*, ValueType*, vtkDataArrayPrivate::AllValues);                                       \
-  extern template VTKCOMMONCORE_EXPORT bool DoComputeScalarRange(                                  \
-    ArrayType*, ValueType*, vtkDataArrayPrivate::FiniteValues);                                    \
-  extern template VTKCOMMONCORE_EXPORT bool DoComputeVectorRange(                                  \
-    ArrayType*, ValueType[2], vtkDataArrayPrivate::AllValues);                                     \
-  extern template VTKCOMMONCORE_EXPORT bool DoComputeVectorRange(                                  \
-    ArrayType*, ValueType[2], vtkDataArrayPrivate::FiniteValues);
+    ArrayType*, ValueType*, vtkDataArrayPrivate::AllValues, const unsigned char*, unsigned char);  \
+  extern template VTKCOMMONCORE_EXPORT bool DoComputeScalarRange(ArrayType*, ValueType*,           \
+    vtkDataArrayPrivate::FiniteValues, const unsigned char*, unsigned char);                       \
+  extern template VTKCOMMONCORE_EXPORT bool DoComputeVectorRange(ArrayType*, ValueType[2],         \
+    vtkDataArrayPrivate::AllValues, const unsigned char*, unsigned char);                          \
+  extern template VTKCOMMONCORE_EXPORT bool DoComputeVectorRange(ArrayType*, ValueType[2],         \
+    vtkDataArrayPrivate::FiniteValues, const unsigned char*, unsigned char);
 
 #ifdef VTK_USE_SCALED_SOA_ARRAYS
 
@@ -548,11 +571,62 @@ bool DoComputeVectorRange(A*, R[2], FiniteValues);
 
 namespace vtkDataArrayPrivate
 {
+// These are instantiated in vtkGenericDataArrayValueRange${i}.cxx
 VTK_DECLARE_VALUERANGE_VALUETYPE(long)
 VTK_DECLARE_VALUERANGE_VALUETYPE(unsigned long)
 VTK_DECLARE_VALUERANGE_VALUETYPE(long long)
 VTK_DECLARE_VALUERANGE_VALUETYPE(unsigned long long)
+
+// This is instantiated in vtkGenericDataArray.cxx
 VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkDataArray, double)
+
+// These are instantiated in vtkFloatArray.cxx, vtkDoubleArray.cxx, etc
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkAOSDataArrayTemplate<float>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkAOSDataArrayTemplate<double>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkAOSDataArrayTemplate<char>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkAOSDataArrayTemplate<signed char>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkAOSDataArrayTemplate<unsigned char>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkAOSDataArrayTemplate<short>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkAOSDataArrayTemplate<unsigned short>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkAOSDataArrayTemplate<int>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkAOSDataArrayTemplate<unsigned int>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkAOSDataArrayTemplate<long>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkAOSDataArrayTemplate<unsigned long>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkAOSDataArrayTemplate<long long>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkAOSDataArrayTemplate<unsigned long long>, double)
+
+// These are instantiated in vtkSOADataArrayTemplateInstantiate${i}.cxx
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkSOADataArrayTemplate<float>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkSOADataArrayTemplate<double>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkSOADataArrayTemplate<char>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkSOADataArrayTemplate<signed char>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkSOADataArrayTemplate<unsigned char>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkSOADataArrayTemplate<short>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkSOADataArrayTemplate<unsigned short>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkSOADataArrayTemplate<int>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkSOADataArrayTemplate<unsigned int>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkSOADataArrayTemplate<long>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkSOADataArrayTemplate<unsigned long>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkSOADataArrayTemplate<long long>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkSOADataArrayTemplate<unsigned long long>, double)
+
+// These are instantiated in vtkScaledSOADataArrayTemplateInstantiate${i}.cxx
+#ifdef VTK_USE_SCALED_SOA_ARRAYS
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkScaledSOADataArrayTemplate<float>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkScaledSOADataArrayTemplate<double>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkScaledSOADataArrayTemplate<char>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkScaledSOADataArrayTemplate<signed char>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkScaledSOADataArrayTemplate<unsigned char>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkScaledSOADataArrayTemplate<short>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkScaledSOADataArrayTemplate<unsigned short>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkScaledSOADataArrayTemplate<int>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkScaledSOADataArrayTemplate<unsigned int>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkScaledSOADataArrayTemplate<long>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkScaledSOADataArrayTemplate<unsigned long>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkScaledSOADataArrayTemplate<long long>, double)
+VTK_DECLARE_VALUERANGE_ARRAYTYPE(vtkScaledSOADataArrayTemplate<unsigned long long>, double)
+#endif // VTK_USE_SCALED_SOA_ARRAYS
+
 } // namespace vtkDataArrayPrivate
 
 #undef VTK_DECLARE_VALUERANGE_ARRAYTYPE

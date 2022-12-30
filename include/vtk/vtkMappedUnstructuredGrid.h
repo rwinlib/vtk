@@ -52,6 +52,7 @@
  * - vtkIdType GetNumberOfCells()
  * - int GetCellType(vtkIdType cellId)
  * - void GetCellPoints(vtkIdType cellId, vtkIdList *ptIds)
+ * - void GetFaceStream(vtkIdType cellId, vtkIdList *ptIds)
  * - void GetPointCells(vtkIdType ptId, vtkIdList *cellIds)
  * - int GetMaxCellSize()
  * - void GetIdsOfCellsOfType(int type, vtkIdTypeArray *array)
@@ -146,7 +147,7 @@
 #include "vtkSmartPointer.h"                       // For vtkSmartPointer
 
 template <class Implementation,
-  class CellIterator = vtkMappedUnstructuredGridCellIterator<Implementation> >
+  class CellIterator = vtkMappedUnstructuredGridCellIterator<Implementation>>
 class vtkMappedUnstructuredGrid : public vtkUnstructuredGridBase
 {
   typedef vtkMappedUnstructuredGrid<Implementation, CellIterator> SelfType;
@@ -230,7 +231,8 @@ private:
   class _exportDecl _className : public vtkMappedUnstructuredGrid<_impl, _cIter>                   \
   {                                                                                                \
   public:                                                                                          \
-    vtkTypeMacro(_className, vtkMappedUnstructuredGrid<_impl, _cIter>);                            \
+    typedef vtkMappedUnstructuredGrid<_impl, _cIter> SelfType;                                     \
+    vtkTypeMacro(_className, SelfType);                                                            \
     static _className* New();                                                                      \
                                                                                                    \
   protected:                                                                                       \
@@ -286,7 +288,7 @@ private:
 #define vtkMakeMappedUnstructuredGrid(_className, _impl)                                           \
   vtkMakeExportedMappedUnstructuredGrid(_className, _impl, )
 
-#define vtkMakeMappedUnstructuredGridWithIter(_className, _impl, _cIter, _exportDecl)              \
+#define vtkMakeMappedUnstructuredGridWithIter(_className, _impl, _cIter)                           \
   vtkMakeExportedMappedUnstructuredGridWithIter(_className, _impl, _cIter, )
 
 #endif // vtkMappedUnstructuredGrid_h

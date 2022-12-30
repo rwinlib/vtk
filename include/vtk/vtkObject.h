@@ -114,7 +114,7 @@ public:
    */
   void PrintSelf(ostream& os, vtkIndent indent) override;
 
-  //@{
+  ///@{
   /**
    * This is a global flag that controls whether any debug, warning
    * or error messages are displayed.
@@ -123,9 +123,9 @@ public:
   static void GlobalWarningDisplayOn() { vtkObject::SetGlobalWarningDisplay(1); }
   static void GlobalWarningDisplayOff() { vtkObject::SetGlobalWarningDisplay(0); }
   static int GetGlobalWarningDisplay();
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   /**
    * Allow people to add/remove/invoke observers (callbacks) to any VTK
    * object.  This is an implementation of the subject/observer design
@@ -146,7 +146,7 @@ public:
   void RemoveObservers(const char* event, vtkCommand*);
   vtkTypeBool HasObserver(unsigned long event, vtkCommand*);
   vtkTypeBool HasObserver(const char* event, vtkCommand*);
-  //@}
+  ///@}
 
   void RemoveObserver(unsigned long tag);
   void RemoveObservers(unsigned long event);
@@ -155,7 +155,7 @@ public:
   vtkTypeBool HasObserver(unsigned long event);
   vtkTypeBool HasObserver(const char* event);
 
-  //@{
+  ///@{
   /**
    * Overloads to AddObserver that allow developers to add class member
    * functions as callbacks for events.  The callback function can
@@ -199,9 +199,9 @@ public:
     // vtkObjectCommandInternal)
     return this->AddTemplatedObserver(event, callable, priority);
   }
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   /**
    * Allow user to set the AbortFlagOn() with the return value of the callback
    * method.
@@ -215,9 +215,9 @@ public:
     // vtkObjectCommandInternal)
     return this->AddTemplatedObserver(event, callable, priority);
   }
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   /**
    * This method invokes an event and return whether the event was
    * aborted or not. If the event was aborted, the return value is 1,
@@ -225,10 +225,27 @@ public:
    */
   int InvokeEvent(unsigned long event, void* callData);
   int InvokeEvent(const char* event, void* callData);
-  //@}
+  ///@}
 
   int InvokeEvent(unsigned long event) { return this->InvokeEvent(event, nullptr); }
   int InvokeEvent(const char* event) { return this->InvokeEvent(event, nullptr); }
+
+  ///@{
+  /**
+   * Set/get the name of this object for reporting purposes. The name appears in
+   * warning and debug messages and in the Print output. Setting the object name
+   * does not change the MTime and does not invoke a ModifiedEvent. Derived
+   * classes implementing copying methods are expected not to copy the ObjectName.
+   */
+  virtual void SetObjectName(const std::string& objectName);
+  virtual std::string GetObjectName() const;
+  ///@}
+
+  /**
+   * The object description printed in messages and PrintSelf
+   * output. To be used only for reporting purposes.
+   */
+  std::string GetObjectDescription() const override;
 
 protected:
   vtkObject();
@@ -241,8 +258,9 @@ protected:
   bool Debug;                      // Enable debug messages
   vtkTimeStamp MTime;              // Keep track of modification time
   vtkSubjectHelper* SubjectHelper; // List of observers on this object
+  std::string ObjectName;          // Name of this object for reporting
 
-  //@{
+  ///@{
   /**
    * These methods allow a command to exclusively grab all events. (This
    * method is typically used by widgets to grab events once an event
@@ -253,7 +271,7 @@ protected:
    */
   void InternalGrabFocus(vtkCommand* mouseEvents, vtkCommand* keypressEvents = nullptr);
   void InternalReleaseFocus();
-  //@}
+  ///@}
 
 private:
   vtkObject(const vtkObject&) = delete;
@@ -261,7 +279,7 @@ private:
 
   /**
    * Following classes (vtkClassMemberCallbackBase,
-   * vtkClassMemberCallback, and vtkClassMemberHanderPointer)
+   * vtkClassMemberCallback, and vtkClassMemberHandlerPointer)
    * along with vtkObjectCommandInternal are for supporting
    * templated AddObserver() overloads that allow developers
    * to add event callbacks that are class member functions.
@@ -269,16 +287,16 @@ private:
   class vtkClassMemberCallbackBase
   {
   public:
-    //@{
+    ///@{
     /**
      * Called when the event is invoked
      */
     virtual bool operator()(vtkObject*, unsigned long, void*) = 0;
-    virtual ~vtkClassMemberCallbackBase() {}
-    //@}
+    virtual ~vtkClassMemberCallbackBase() = default;
+    ///@}
   };
 
-  //@{
+  ///@{
   /**
    * This is a weak pointer for vtkObjectBase and a regular
    * void pointer for everything else
@@ -319,9 +337,9 @@ private:
     void* VoidPointer;
     bool UseWeakPointer;
   };
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   /**
    * Templated member callback.
    */
@@ -357,7 +375,7 @@ private:
       this->Method2 = nullptr;
       this->Method3 = method;
     }
-    ~vtkClassMemberCallback() override {}
+    ~vtkClassMemberCallback() override = default;
 
     // Called when the event is invoked
     bool operator()(vtkObject* caller, unsigned long event, void* calldata) override
@@ -381,9 +399,17 @@ private:
       return false;
     }
   };
-  //@}
+  ///@}
 
-  //@{
+  ///@{
+  /**
+   * Hook into the destruction process to send out `DeleteEvent` and remove
+   * observers.
+   */
+  void ObjectFinalize() final;
+  ///@}
+
+  ///@{
   /**
    * Called by templated variants of AddObserver.
    */
@@ -391,7 +417,7 @@ private:
     unsigned long event, vtkClassMemberCallbackBase* callable, float priority);
   // Friend to access AddTemplatedObserver().
   friend class vtkObjectCommandInternal;
-  //@}
+  ///@}
 };
 
 #endif

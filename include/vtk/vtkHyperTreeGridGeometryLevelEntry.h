@@ -14,7 +14,6 @@
 =========================================================================*/
 /**
  * @class   vtkHyperTreeGridGeometryLevelEntry
- *
  * @brief   Cursor cache data with coordinates and level info
  *
  * cf. vtkHyperTreeGridEntry
@@ -36,8 +35,6 @@
 
 #ifndef vtkHyperTreeGridGeometryLevelEntry_h
 #define vtkHyperTreeGridGeometryLevelEntry_h
-
-#ifndef __VTK_WRAP__
 
 #include "assert.h"
 
@@ -266,8 +263,6 @@ private:
    */
   double Origin[3];
 };
-
-#endif // __VTK_WRAP__
 
 #endif // vtkHyperTreeGridGeometryLevelEntry
 // VTK-HeaderTest-Exclude: vtkHyperTreeGridGeometryLevelEntry.h

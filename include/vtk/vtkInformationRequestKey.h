@@ -42,12 +42,12 @@ public:
    * name and a location. This method is provided for wrappers. Use the
    * constructor directly from C++ instead.
    */
-  static vtkInformationRequestKey* MakeKey(const char* name, const char* location)
+  static VTK_NEWINSTANCE vtkInformationRequestKey* MakeKey(const char* name, const char* location)
   {
     return new vtkInformationRequestKey(name, location);
   }
 
-  //@{
+  ///@{
   /**
    * Get/Set the value associated with this key in the given
    * information object.
@@ -55,7 +55,7 @@ public:
   void Set(vtkInformation* info);
   void Remove(vtkInformation* info) override;
   int Has(vtkInformation* info) override;
-  //@}
+  ///@}
 
   /**
    * Copy the entry associated with this key from one information

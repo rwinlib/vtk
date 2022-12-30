@@ -102,7 +102,7 @@ public:
    */
   void UnionFieldList(vtkDataSetAttributes* dsa);
 
-  //@{
+  ///@{
   /**
    * These methods can called to generate and update the output
    * vtkDataSetAttributes. These match corresponding API on vtkDataSetAttributes
@@ -112,11 +112,11 @@ public:
   void CopyAllocate(vtkDataSetAttributes* output, int ctype, vtkIdType sz, vtkIdType ext) const;
   void CopyData(int inputIndex, vtkDataSetAttributes* input, vtkIdType fromId,
     vtkDataSetAttributes* output, vtkIdType toId) const;
-  void CopyData(int inputIdx, vtkDataSetAttributes* input, vtkIdType inputStart,
+  void CopyData(int inputIndex, vtkDataSetAttributes* input, vtkIdType inputStart,
     vtkIdType numValues, vtkDataSetAttributes* output, vtkIdType outStart) const;
-  void InterpolatePoint(int inputIdx, vtkDataSetAttributes* input, vtkIdList* inputIds,
+  void InterpolatePoint(int inputIndex, vtkDataSetAttributes* input, vtkIdList* inputIds,
     double* weights, vtkDataSetAttributes* output, vtkIdType toId) const;
-  //@}
+  ///@}
 
   /**
    * Use this method to provide a custom callback function to invoke for each
@@ -124,6 +124,27 @@ public:
    */
   void TransformData(int inputIndex, vtkDataSetAttributes* input, vtkDataSetAttributes* output,
     std::function<void(vtkAbstractArray*, vtkAbstractArray*)> op) const;
+
+  /**
+   * This method can be used to determine the number of arrays remaining
+   * after intersection or union operations. See also
+   * vtkFieldData::GetNumberOfArrays().
+   */
+  int GetNumberOfArrays();
+
+  /**
+   * A convenience function that builds a prototype / template dataset
+   * attributes for initializing the process of attribute interpolation and
+   * copying. The supplied protoPD should be initialized (empty), and the
+   * arrays present in this field list are instantiated and added to the
+   * prototype attributes. The typical usage is to use field list
+   * intersection (or union) operations to build up the field list, then
+   * create the prototype. Note, to retain an order of the data arrays,
+   * an optional ordering dataset attributes may be provided. (This is
+   * necessary because the vtkDataSetAttributesFieldList does not necessarily
+   * retain the original order of data arrays.)
+   */
+  void BuildPrototype(vtkDataSetAttributes* protoDSA, vtkDataSetAttributes* ordering = nullptr);
 
 protected:
   /**

@@ -32,6 +32,13 @@
  * octrees and kd-trees. These are often more efficient for the
  * operations described here.
  *
+ * @warning
+ * Frequently vtkStaticPointLocator is used in lieu of vtkPointLocator.
+ * They are very similar in terms of algorithmic approach, however
+ * vtkStaticCellLocator is threaded and is typically much faster for
+ * a large number of points (on the order of 3-5x faster). For small numbers
+ * of points, vtkPointLocator is just as fast as vtkStaticPointLocator.
+ *
  * @sa
  * vtkCellPicker vtkPointPicker vtkStaticPointLocator
  */
@@ -56,29 +63,29 @@ public:
    */
   static vtkPointLocator* New();
 
-  //@{
+  ///@{
   /**
    * Standard methods for type management and printing.
    */
   vtkTypeMacro(vtkPointLocator, vtkIncrementalPointLocator);
   void PrintSelf(ostream& os, vtkIndent indent) override;
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   /**
    * Set the number of divisions in x-y-z directions.
    */
   vtkSetVector3Macro(Divisions, int);
   vtkGetVectorMacro(Divisions, int, 3);
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   /**
    * Specify the average number of points in each bucket.
    */
   vtkSetClampMacro(NumberOfPointsPerBucket, int, 1, VTK_INT_MAX);
   vtkGetMacro(NumberOfPointsPerBucket, int);
-  //@}
+  ///@}
 
   // Re-use any superclass signatures that we don't override.
   using vtkAbstractPointLocator::FindClosestPoint;
@@ -91,7 +98,7 @@ public:
    */
   vtkIdType FindClosestPoint(const double x[3]) override;
 
-  //@{
+  ///@{
   /**
    * Given a position x and a radius r, return the id of the point
    * closest to the point in that radius.
@@ -102,7 +109,7 @@ public:
   vtkIdType FindClosestPointWithinRadius(double radius, const double x[3], double& dist2) override;
   virtual vtkIdType FindClosestPointWithinRadius(
     double radius, const double x[3], double inputDataLength, double& dist2);
-  //@}
+  ///@}
 
   /**
    * Initialize the point insertion process. The newPts is an object
@@ -118,7 +125,7 @@ public:
    * place their data. Bounds are the box that the points lie in.
    * Not thread safe.
    */
-  int InitPointInsertion(vtkPoints* newPts, const double bounds[6], vtkIdType estSize) override;
+  int InitPointInsertion(vtkPoints* newPts, const double bounds[6], vtkIdType estNumPts) override;
 
   /**
    * Incrementally insert a point into search structure with a particular
@@ -143,7 +150,7 @@ public:
    */
   vtkIdType InsertNextPoint(const double x[3]) override;
 
-  //@{
+  ///@{
   /**
    * Determine whether point given by x[3] has been inserted into points list.
    * Return id of previously inserted point if this is true, otherwise return
@@ -158,7 +165,7 @@ public:
     return this->IsInsertedPoint(xyz);
   };
   vtkIdType IsInsertedPoint(const double x[3]) override;
-  //@}
+  ///@}
 
   /**
    * Determine whether point given by x[3] has been inserted into points list.
@@ -190,7 +197,7 @@ public:
    */
   void FindClosestNPoints(int N, const double x[3], vtkIdList* result) override;
 
-  //@{
+  ///@{
   /**
    * Find the closest points to a position such that each octant of
    * space around the position contains at least N points. Loosely
@@ -200,7 +207,7 @@ public:
    */
   virtual void FindDistributedPoints(int N, const double x[3], vtkIdList* result, int M);
   virtual void FindDistributedPoints(int N, double x, double y, double z, vtkIdList* result, int M);
-  //@}
+  ///@}
 
   /**
    * Find all points within a specified radius R of position x.
@@ -218,14 +225,14 @@ public:
    */
   virtual vtkIdList* GetPointsInBucket(const double x[3], int ijk[3]);
 
-  //@{
+  ///@{
   /**
    * Provide an accessor to the points.
    */
   vtkGetObjectMacro(Points, vtkPoints);
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   /**
    * See vtkLocator interface documentation.
    * These methods are not thread safe.
@@ -233,12 +240,15 @@ public:
   void Initialize() override;
   void FreeSearchStructure() override;
   void BuildLocator() override;
+  void ForceBuildLocator() override;
   void GenerateRepresentation(int level, vtkPolyData* pd) override;
-  //@}
+  ///@}
 
 protected:
   vtkPointLocator();
   ~vtkPointLocator() override;
+
+  void BuildLocatorInternal() override;
 
   // place points in appropriate buckets
   void GetBucketNeighbors(

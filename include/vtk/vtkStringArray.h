@@ -45,6 +45,7 @@ public:
   };
 
   static vtkStringArray* New();
+  static vtkStringArray* ExtendedNew();
   vtkTypeMacro(vtkStringArray, vtkAbstractArray);
   void PrintSelf(ostream& os, vtkIndent indent) override;
 
@@ -106,6 +107,9 @@ public:
    */
   void InsertTuples(vtkIdList* dstIds, vtkIdList* srcIds, vtkAbstractArray* source) override;
 
+  void InsertTuplesStartingAt(
+    vtkIdType dstStart, vtkIdList* srcIds, vtkAbstractArray* source) override;
+
   /**
    * Copy n consecutive tuples starting at srcStart from the source array to
    * this array, starting at the dstStart location.
@@ -144,7 +148,7 @@ public:
 
   /**
    * Given a list of indices, return an array of values.  You must
-   * insure that the output array has been previously allocated with
+   * ensure that the output array has been previously allocated with
    * enough space to hold the data and that the types match
    * sufficiently to allow conversion (if necessary).
    */
@@ -152,7 +156,7 @@ public:
 
   /**
    * Get the values for the range of indices specified (i.e.,
-   * p1->p2 inclusive). You must insure that the output array has been
+   * p1->p2 inclusive). You must ensure that the output array has been
    * previously allocated with enough space to hold the data and that
    * the type of the output array is compatible with the type of this
    * array.
@@ -166,7 +170,13 @@ public:
   vtkTypeBool Allocate(vtkIdType sz, vtkIdType ext = 1000) override;
 
   /**
-   * Get the data at a particular index.
+   * Read-access of string at a particular index.
+   */
+  const vtkStdString& GetValue(vtkIdType id) const
+    VTK_EXPECTS(0 <= id && id < this->GetNumberOfValues());
+
+  /**
+   * Get the string at a particular index.
    */
   vtkStdString& GetValue(vtkIdType id) VTK_EXPECTS(0 <= id && id < this->GetNumberOfValues());
 
@@ -193,7 +203,10 @@ public:
     this->SetNumberOfValues(this->NumberOfComponents * number);
   }
 
-  vtkIdType GetNumberOfValues() { return this->MaxId + 1; }
+  /**
+   * Return the number of values in the array.
+   */
+  vtkIdType GetNumberOfValues() const { return (this->MaxId + 1); }
 
   int GetNumberOfElementComponents() { return 0; }
   int GetElementComponentSize() const override
@@ -301,13 +314,13 @@ public:
    */
   vtkIdType GetDataSize() const override;
 
-  //@{
+  ///@{
   /**
    * Return the indices where a specific value appears.
    */
   vtkIdType LookupValue(vtkVariant value) override;
   void LookupValue(vtkVariant value, vtkIdList* ids) override;
-  //@}
+  ///@}
 
   vtkIdType LookupValue(const vtkStdString& value);
   void LookupValue(const vtkStdString& value, vtkIdList* ids);

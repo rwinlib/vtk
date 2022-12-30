@@ -129,6 +129,22 @@ public:
   void Transpose() { vtkMatrix4x4::Transpose(this, this); }
   static void Transpose(const double inElements[16], double outElements[16]);
 
+  ///@{
+  /**
+   * Construct a matrix from a rotation
+   */
+  static void MatrixFromRotation(double angle, double x, double y, double z, vtkMatrix4x4* result);
+  static void MatrixFromRotation(double angle, double x, double y, double z, double matrix[16]);
+  ///@}
+
+  /**
+   * Given an orientation and position this function will fill in a matrix
+   * representing the transformation from the pose to whatever space the pose was
+   * defined in. For example if the position and orientation are in world
+   * coordinates then this method would set the matrix to be PoseToWorld
+   */
+  static void PoseToMatrix(double pos[3], double ori[4], vtkMatrix4x4* mat);
+
   /**
    * Multiply a homogeneous coordinate by this matrix, i.e. out = A*in.
    * The in[4] and out[4] can be the same array.
@@ -164,13 +180,15 @@ public:
     return this->DoublePoint;
   }
 
-  //@{
+  ///@{
   /**
    * Multiplies matrices a and b and stores the result in c.
    */
   static void Multiply4x4(const vtkMatrix4x4* a, const vtkMatrix4x4* b, vtkMatrix4x4* c);
   static void Multiply4x4(const double a[16], const double b[16], double c[16]);
-  //@}
+  static void Multiply4x4(const double a[16], const double b[16], float c[16]);
+  static void MultiplyAndTranspose4x4(const double a[16], const double b[16], float c[16]);
+  ///@}
 
   /**
    * Compute adjoint of the matrix and put it into out.
@@ -209,7 +227,7 @@ public:
 
 protected:
   vtkMatrix4x4() { vtkMatrix4x4::Identity(*this->Element); }
-  ~vtkMatrix4x4() override {}
+  ~vtkMatrix4x4() override = default;
 
   float FloatPoint[4];
   double DoublePoint[4];
@@ -237,6 +255,36 @@ inline void vtkMatrix4x4::Multiply4x4(const double a[16], const double b[16], do
   for (int k = 0; k < 16; k++)
   {
     c[k] = tmp[k];
+  }
+}
+
+//----------------------------------------------------------------------------
+// Multiplies matrices a and b and stores the result in c.
+inline void vtkMatrix4x4::Multiply4x4(const double a[16], const double b[16], float c[16])
+{
+  for (int i = 0; i < 16; i += 4)
+  {
+    for (int j = 0; j < 4; j++)
+    {
+      c[i + j] =
+        a[i + 0] * b[j + 0] + a[i + 1] * b[j + 4] + a[i + 2] * b[j + 8] + a[i + 3] * b[j + 12];
+    }
+  }
+}
+
+//----------------------------------------------------------------------------
+// Multiplies matrices a and b and stores the result in c.
+inline void vtkMatrix4x4::MultiplyAndTranspose4x4(
+  const double a[16], const double b[16], float c[16])
+{
+  for (int i = 0; i < 4; i++)
+  {
+    for (int j = 0; j < 4; j++)
+    {
+      int it4 = i * 4;
+      c[i + j * 4] = a[it4 + 0] * b[j + 0] + a[it4 + 1] * b[j + 4] + a[it4 + 2] * b[j + 8] +
+        a[it4 + 3] * b[j + 12];
+    }
   }
 }
 

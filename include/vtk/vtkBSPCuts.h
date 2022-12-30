@@ -49,6 +49,11 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent) override;
 
   /**
+   * Returns VTK_BSP_CUTS.
+   */
+  int GetDataObjectType() override { return VTK_BSP_CUTS; }
+
+  /**
    * Initialize the cuts with arrays of information.  This type of
    * information would be obtained from a graph partitioning software
    * package like Zoltan.
@@ -104,27 +109,27 @@ public:
   void PrintTree();
   void PrintArrays();
 
-  //@{
+  ///@{
   /**
    * Retrieve an instance of this class from an information object.
    */
   static vtkBSPCuts* GetData(vtkInformation* info);
   static vtkBSPCuts* GetData(vtkInformationVector* v, int i = 0);
-  //@}
+  ///@}
 
   /**
    * Restore data object to initial state,
    */
   void Initialize() override;
 
-  //@{
+  ///@{
   /**
    * Shallow copy.  These copy the data, but not any of the
    * pipeline connections.
    */
   void ShallowCopy(vtkDataObject* src) override;
   void DeepCopy(vtkDataObject* src) override;
-  //@}
+  ///@}
 
 protected:
   vtkBSPCuts();
@@ -134,7 +139,7 @@ protected:
 
   static int CountNodes(vtkKdNode* kd);
   static void SetMinMaxId(vtkKdNode* kd);
-  static void _PrintTree(vtkKdNode* kd, int depth);
+  static void PrintTree_(vtkKdNode* kd, int depth);
 
   void BuildTree(vtkKdNode* kd, int idx);
   int WriteArray(vtkKdNode* kd, int loc);

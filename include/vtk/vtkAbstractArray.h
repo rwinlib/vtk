@@ -50,6 +50,13 @@
  * already exists, "inserting" will overwrite existing values, rather than shift
  * the array contents and insert the new data at the specified location.
  *
+ * If code is modifying contents of an existing array, it is
+ * required that one calls `vtkAbstractArray::Modified()` explicitly
+ * after the modifications to the contents are completed.
+ * APIs like `SetTuple` etc. don't call `Modified` to avoid performance hits.
+ * Unless `Modified` is called, various cached entities, like array range,
+ * map created for `LookupValue` may become obsolete and yield incorrect results.
+ *
  * @sa
  * vtkDataArray vtkStringArray vtkCellArray
  */
@@ -58,6 +65,7 @@
 #define vtkAbstractArray_h
 
 #include "vtkCommonCoreModule.h" // For export macro
+#include "vtkIdList.h"           // For InsertTuples
 #include "vtkObject.h"
 #include "vtkVariant.h" // for variant arguments
 
@@ -99,7 +107,7 @@ public:
    */
   virtual int GetDataType() const = 0;
 
-  //@{
+  ///@{
   /**
    * Return the size of the underlying data type.  For a bit, 0 is
    * returned.  For string 0 is returned. Arrays with variable length
@@ -107,7 +115,7 @@ public:
    */
   virtual int GetDataTypeSize() const = 0;
   static int GetDataTypeSize(int type);
-  //@}
+  ///@}
 
   /**
    * Return the size, in bytes, of the lowest-level element of an
@@ -118,14 +126,14 @@ public:
    */
   virtual int GetElementComponentSize() const = 0;
 
-  //@{
+  ///@{
   /**
    * Set/Get the dimension (n) of the components. Must be >= 1. Make sure that
    * this is set before allocation.
    */
   vtkSetClampMacro(NumberOfComponents, int, 1, VTK_INT_MAX);
   int GetNumberOfComponents() const { return this->NumberOfComponents; }
-  //@}
+  ///@}
 
   /**
    * Set the name for a component. `component` must be >= 0.
@@ -144,7 +152,7 @@ public:
   bool HasAComponentName() const;
 
   /**
-   * Copies the component names from the inputed array to the current array
+   * Copies the component names from the inputted array to the current array
    * make sure that the current array has the same number of components as the input array
    */
   int CopyComponentNames(vtkAbstractArray* da);
@@ -203,6 +211,14 @@ public:
   virtual void InsertTuples(vtkIdList* dstIds, vtkIdList* srcIds, vtkAbstractArray* source) = 0;
 
   /**
+   * Copy the tuples indexed in srcIds from the source array to the tuple
+   * locations starting at index dstStart.
+   * Note that memory allocation is performed as necessary to hold the data.
+   */
+  virtual void InsertTuplesStartingAt(
+    vtkIdType dstStart, vtkIdList* srcIds, vtkAbstractArray* source) = 0;
+
+  /**
    * Copy n consecutive tuples starting at srcStart from the source array to
    * this array, starting at the dstStart location.
    * Note that memory allocation is performed as necessary to hold the data.
@@ -219,14 +235,14 @@ public:
 
   /**
    * Given a list of tuple ids, return an array of tuples.
-   * You must insure that the output array has been previously
+   * You must ensure that the output array has been previously
    * allocated with enough space to hold the data.
    */
   virtual void GetTuples(vtkIdList* tupleIds, vtkAbstractArray* output);
 
   /**
    * Get the tuples for the range of tuple ids specified
-   * (i.e., p1->p2 inclusive). You must insure that the output array has
+   * (i.e., p1->p2 inclusive). You must ensure that the output array has
    * been previously allocated with enough space to hold the data.
    */
   virtual void GetTuples(vtkIdType p1, vtkIdType p2, vtkAbstractArray* output);
@@ -297,7 +313,7 @@ public:
    */
   virtual vtkTypeBool Resize(vtkIdType numTuples) = 0;
 
-  //@{
+  ///@{
   /**
    * Reset to an empty state, without freeing any memory.
    */
@@ -306,7 +322,7 @@ public:
     this->MaxId = -1;
     this->DataChanged();
   }
-  //@}
+  ///@}
 
   /**
    * Return the size of the data.
@@ -326,7 +342,7 @@ public:
     VTK_DATA_ARRAY_USER_DEFINED
   };
 
-  //@{
+  ///@{
   /**
    * This method lets the user specify data to be held by the array.  The
    * array argument is a pointer to the data.  size is the size of the array
@@ -350,7 +366,7 @@ public:
   {
     this->SetVoidArray(array, size, save);
   }
-  //@}
+  ///@}
 
   /**
    * This method allows the user to specify a custom free function to be
@@ -377,13 +393,13 @@ public:
    */
   virtual unsigned long GetActualMemorySize() const = 0;
 
-  //@{
+  ///@{
   /**
    * Set/get array's name
    */
   vtkSetStringMacro(Name);
   vtkGetStringMacro(Name);
-  //@}
+  ///@}
 
   /**
    * Get the name of a data type as a string.
@@ -397,7 +413,7 @@ public:
    * Creates an array for dataType where dataType is one of
    * VTK_BIT, VTK_CHAR, VTK_UNSIGNED_CHAR, VTK_SHORT,
    * VTK_UNSIGNED_SHORT, VTK_INT, VTK_UNSIGNED_INT, VTK_LONG,
-   * VTK_UNSIGNED_LONG, VTK_DOUBLE, VTK_DOUBLE, VTK_ID_TYPE,
+   * VTK_UNSIGNED_LONG, VTK_FLOAT, VTK_DOUBLE, VTK_ID_TYPE,
    * VTK_STRING.
    * Note that the data array returned has to be deleted by the
    * user.
@@ -429,13 +445,17 @@ public:
     return this->GetNumberOfComponents() * this->GetNumberOfTuples();
   }
 
-  //@{
+  ///@{
   /**
    * Return the value indices where a specific value appears.
+   *
+   * @warning Make sure that the lookup structure is not outdated. Calls
+   * to `Modified` should be done appropriately so the array knows
+   * when to update its lookup structure.
    */
   virtual vtkIdType LookupValue(vtkVariant value) = 0;
   virtual void LookupValue(vtkVariant value, vtkIdList* valueIds) = 0;
-  //@}
+  ///@}
 
   /**
    * Retrieve value from the array as a variant.
@@ -621,14 +641,14 @@ public:
     MAX_DISCRETE_VALUES = 32
   };
 
-  //@{
+  ///@{
   /**
    * Get/Set the maximum number of prominent values this array may contain
    * before it is considered continuous.  Default value is 32.
    */
   vtkGetMacro(MaxDiscreteValues, unsigned int);
   vtkSetMacro(MaxDiscreteValues, unsigned int);
-  //@}
+  ///@}
 
   enum
   {
@@ -648,6 +668,11 @@ public:
    * vtkArrayDownCast.
    */
   virtual int GetArrayType() const { return AbstractArray; }
+
+  /**
+   * Get the name for the array type as string
+   */
+  const char* GetArrayTypeAsString() const;
 
 protected:
   // Construct object with default tuple dimension (number of components) of 1.
@@ -695,7 +720,7 @@ private:
   void operator=(const vtkAbstractArray&) = delete;
 };
 
-//@{
+///@{
 /**
  * Implementation of vtkArrayDownCast. The templating/etc is moved to this
  * worker struct to get around limitations of template functions (no partial
@@ -706,7 +731,7 @@ struct vtkArrayDownCast_impl
 {
   inline ArrayT* operator()(vtkAbstractArray* array) { return ArrayT::SafeDownCast(array); }
 };
-//@}
+///@}
 
 /**
  * vtkArrayDownCast is to be used by generic (e.g. templated) code for quickly
@@ -733,7 +758,7 @@ ArrayT* vtkArrayDownCast(vtkAbstractArray* array)
   return vtkArrayDownCast_impl<ArrayT>()(array);
 }
 
-//@{
+///@{
 /**
  * This macro is used to tell vtkArrayDownCast to use FastDownCast instead of
  * SafeDownCast.
@@ -744,9 +769,9 @@ ArrayT* vtkArrayDownCast(vtkAbstractArray* array)
   {                                                                                                \
     inline ArrayT* operator()(vtkAbstractArray* array) { return ArrayT::FastDownCast(array); }     \
   }
-//@}
+///@}
 
-//@{
+///@{
 /**
  * Same as vtkArrayDownCast_FastCastMacro, but treats ArrayT as a
  * single-parameter template (the parameter is the value type). Defines a
@@ -755,13 +780,13 @@ ArrayT* vtkArrayDownCast(vtkAbstractArray* array)
  */
 #define vtkArrayDownCast_TemplateFastCastMacro(ArrayT)                                             \
   template <typename ValueT>                                                                       \
-  struct vtkArrayDownCast_impl<ArrayT<ValueT> >                                                    \
+  struct vtkArrayDownCast_impl<ArrayT<ValueT>>                                                     \
   {                                                                                                \
     inline ArrayT<ValueT>* operator()(vtkAbstractArray* array)                                     \
     {                                                                                              \
       return ArrayT<ValueT>::FastDownCast(array);                                                  \
     }                                                                                              \
   }
-//@}
+///@}
 
 #endif

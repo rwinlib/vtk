@@ -36,8 +36,11 @@
 #include "vtkCommonDataModelModule.h" // For export macro
 #include "vtkDataObject.h"
 
+#include <vector> // For GetDataSets
+
 class vtkCompositeDataIterator;
 class vtkCompositeDataSetInternals;
+class vtkDataSet;
 class vtkInformation;
 class vtkInformationStringKey;
 class vtkInformationIntegerKey;
@@ -64,18 +67,18 @@ public:
    * data objects are initialized to nullptr. This also shallow copies the meta data
    * associated with all the nodes.
    */
-  virtual void CopyStructure(vtkCompositeDataSet* input) = 0;
+  virtual void CopyStructure(vtkCompositeDataSet* input);
 
   /**
    * Sets the data set at the location pointed by the iterator.
    * The iterator does not need to be iterating over this dataset itself. It can
-   * be any composite datasite with similar structure (achieved by using
+   * be any composite dataset with similar structure (achieved by using
    * CopyStructure).
    */
   virtual void SetDataSet(vtkCompositeDataIterator* iter, vtkDataObject* dataObj) = 0;
 
   /**
-   * Returns the dataset located at the positiong pointed by the iterator.
+   * Returns the dataset located at the position pointed by the iterator.
    * The iterator does not need to be iterating over this dataset itself. It can
    * be an iterator for composite dataset with similar structure (achieved by
    * using CopyStructure).
@@ -83,31 +86,49 @@ public:
   virtual vtkDataObject* GetDataSet(vtkCompositeDataIterator* iter) = 0;
 
   /**
+   * Returns the dataset located at the position pointed by the flatIndex.
+   * If no dataset has the same flat index, nullptr is returned.
+   *
+   * It should be noted that this function should be used ONLY when you already know the flat index.
+   * It should NOT be used when you are iterating over the composite dataset (in that case, prefer
+   * the vtkCompositeDataIterator).
+   */
+  virtual vtkDataObject* GetDataSet(unsigned int flatIndex);
+
+  /**
    * Return the actual size of the data in kibibytes (1024 bytes). This number
    * is valid only after the pipeline has updated.
    */
   unsigned long GetActualMemorySize() override;
 
-  //@{
+  ///@{
   /**
    * Retrieve an instance of this class from an information object.
    */
   static vtkCompositeDataSet* GetData(vtkInformation* info);
   static vtkCompositeDataSet* GetData(vtkInformationVector* v, int i = 0);
-  //@}
+  ///@}
 
   /**
    * Restore data object to initial state,
    */
   void Initialize() override;
 
-  //@{
+  ///@{
   /**
    * Shallow and Deep copy.
    */
   void ShallowCopy(vtkDataObject* src) override;
   void DeepCopy(vtkDataObject* src) override;
-  //@}
+  ///@}
+
+  /**
+   * For historical reasons, `vtkCompositeDataSet::ShallowCopy` simply pass
+   * pointers to the leaf non-composite datasets. In some cases, we truly want
+   * to shallow copy those leaf non-composite datasets as well. For those cases,
+   * use this method.
+   */
+  virtual void RecursiveShallowCopy(vtkDataObject* src) = 0;
 
   /**
    * Returns the total number of points of all blocks. This will
@@ -153,6 +174,19 @@ public:
    */
   static vtkInformationIntegerKey* CURRENT_PROCESS_CAN_LOAD_BLOCK();
 
+  /**
+   * Extract datasets from the given data object. This method returns a vector
+   * of DataSetT* from the `dobj`. If dobj is a DataSetT, the returned
+   * vector will have just 1 DataSetT. If dobj is a vtkCompositeDataSet, then
+   * we iterate over it and add all non-null leaf nodes to the returned vector.
+   *
+   * If `preserveNull` is true (defaults to false), then `nullptr` place holders
+   * are added as placeholders when leaf node dataset type does not match the
+   * requested or is nullptr to begin with.
+   */
+  template <class DataSetT = vtkDataSet>
+  static std::vector<DataSetT*> GetDataSets(vtkDataObject* dobj, bool preserveNull = false);
+
 protected:
   vtkCompositeDataSet();
   ~vtkCompositeDataSet() override;
@@ -161,5 +195,7 @@ private:
   vtkCompositeDataSet(const vtkCompositeDataSet&) = delete;
   void operator=(const vtkCompositeDataSet&) = delete;
 };
+
+#include "vtkCompositeDataSet.txx" // for template implementations
 
 #endif

@@ -45,12 +45,13 @@ public:
    * name and a location. This method is provided for wrappers. Use the
    * constructor directly from C++ instead.
    */
-  static vtkInformationExecutivePortKey* MakeKey(const char* name, const char* location)
+  static VTK_NEWINSTANCE vtkInformationExecutivePortKey* MakeKey(
+    const char* name, const char* location)
   {
     return new vtkInformationExecutivePortKey(name, location);
   }
 
-  //@{
+  ///@{
   /**
    * Get/Set the value associated with this key in the given
    * information object.
@@ -59,7 +60,7 @@ public:
   vtkExecutive* GetExecutive(vtkInformation* info);
   int GetPort(vtkInformation* info);
   void Get(vtkInformation* info, vtkExecutive*& executive, int& port);
-  //@}
+  ///@}
 
   /**
    * Copy the entry associated with this key from one information

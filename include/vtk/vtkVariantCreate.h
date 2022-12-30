@@ -32,6 +32,7 @@
 #ifndef vtkVariantCreate_h
 #define vtkVariantCreate_h
 
+#include "vtkVariant.h"
 #include <typeinfo> // for warnings
 
 template <typename T>
@@ -118,12 +119,6 @@ inline vtkVariant vtkVariantCreate<double>(const double& value)
 
 template <>
 inline vtkVariant vtkVariantCreate<vtkStdString>(const vtkStdString& value)
-{
-  return value;
-}
-
-template <>
-inline vtkVariant vtkVariantCreate<vtkUnicodeString>(const vtkUnicodeString& value)
 {
   return value;
 }

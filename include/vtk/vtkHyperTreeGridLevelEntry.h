@@ -14,7 +14,6 @@
 =========================================================================*/
 /**
  * @class   vtkHyperTreeGridLevelEntry
- *
  * @brief   LevelEntry is a cache data for cursors requiring level info
  *
  * cf. vtkHyperTreeGridEntry
@@ -36,8 +35,6 @@
 
 #ifndef vtkHyperTreeGridLevelEntry_h
 #define vtkHyperTreeGridLevelEntry_h
-
-#ifndef __VTK_WRAP__
 
 #include "vtkObject.h"
 #include "vtkSmartPointer.h" // Used internally
@@ -239,8 +236,6 @@ protected:
    */
   vtkIdType Index;
 };
-
-#endif // __VTK_WRAP__
 
 #endif // vtkHyperTreeGridLevelEntry_h
 // VTK-HeaderTest-Exclude: vtkHyperTreeGridLevelEntry.h

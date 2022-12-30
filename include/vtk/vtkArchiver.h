@@ -40,42 +40,42 @@ public:
   vtkTypeMacro(vtkArchiver, vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent) override;
 
-  //@{
+  ///@{
   /**
    * Specify the name of the archive to generate.
    */
   vtkGetStringMacro(ArchiveName);
   vtkSetStringMacro(ArchiveName);
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   /**
-   * Open the arhive for writing.
+   * Open the archive for writing.
    */
   virtual void OpenArchive();
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   /**
-   * Close the arhive.
+   * Close the archive.
    */
   virtual void CloseArchive();
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   /**
    * Insert \p data of size \p size into the archive at \p relativePath.
    */
   virtual void InsertIntoArchive(
     const std::string& relativePath, const char* data, std::size_t size);
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   /**
    * Checks if \p relativePath represents an entry in the archive.
    */
   virtual bool Contains(const std::string& relativePath);
-  //@}
+  ///@}
 
 protected:
   vtkArchiver();

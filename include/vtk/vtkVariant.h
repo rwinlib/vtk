@@ -37,7 +37,6 @@
 #include "vtkStdString.h"
 #include "vtkSystemIncludes.h" // To define ostream
 #include "vtkType.h"           // To define type IDs and VTK_TYPE_USE_* flags
-#include "vtkUnicodeString.h"
 
 //
 // The following should be eventually placed in vtkSetGet.h
@@ -54,7 +53,6 @@
   vtkArrayIteratorTemplateMacroCase(VTK_VARIANT, vtkVariant, call)
 
 class vtkStdString;
-class vtkUnicodeString;
 class vtkObjectBase;
 class vtkAbstractArray;
 class vtkVariant;
@@ -161,11 +159,6 @@ public:
   vtkVariant(vtkStdString value);
 
   /**
-   * Create a Unicode string variant
-   */
-  vtkVariant(const vtkUnicodeString& value);
-
-  /**
    * Create a vtkObjectBase variant.
    */
   vtkVariant(vtkObjectBase* value);
@@ -189,11 +182,6 @@ public:
    * Get whether the variant is a string.
    */
   bool IsString() const;
-
-  /**
-   * Get whether the variant is a Unicode string.
-   */
-  bool IsUnicodeString() const;
 
   /**
    * Get whether the variant is any numeric type.
@@ -256,16 +244,6 @@ public:
   bool IsUnsignedLong() const;
 
   /**
-   * Legacy.  Returns false.  The variant is never an __int64.
-   */
-  bool Is__Int64() const;
-
-  /**
-   * Legacy.  Returns false.  The variant is never an unsigned __int64.
-   */
-  bool IsUnsigned__Int64() const;
-
-  /**
    * Get whether the variant is long long.
    */
   bool IsLongLong() const;
@@ -295,17 +273,24 @@ public:
    */
   const char* GetTypeAsString() const;
 
+  enum StringFormatting
+  {
+    DEFAULT_FORMATTING = 0,
+    FIXED_FORMATTING = 1,
+    SCIENTIFIC_FORMATTING = 2
+  };
+
   /**
    * Convert the variant to a string.
+   * Set the formatting argument to either DEFAULT_FORMATTING, FIXED_FORMATTING,
+   * SCIENTIFIC_FORMATTING to control the formatting. Set the precision
+   * argument to control the precision of the output. These two parameters have no effect when the
+   * variant is not a floating-point value or an array of floating-point values.
+   * See the std doc for more information.
    */
-  vtkStdString ToString() const;
+  vtkStdString ToString(int formatting = DEFAULT_FORMATTING, int precision = 6) const;
 
-  /**
-   * convert the variant to a Unicode string.
-   */
-  vtkUnicodeString ToUnicodeString() const;
-
-  //@{
+  ///@{
   /**
    * Convert the variant to a numeric type:
    * If it holds a numeric, cast to the appropriate type.
@@ -345,7 +330,7 @@ public:
   vtkTypeInt64 ToTypeInt64() const { return this->ToTypeInt64(nullptr); }
   vtkTypeUInt64 ToTypeUInt64(bool* valid) const;
   vtkTypeUInt64 ToTypeUInt64() const { return this->ToTypeUInt64(nullptr); }
-  //@}
+  ///@}
 
   /**
    * Return the VTK object, or nullptr if not of that type.
@@ -369,7 +354,7 @@ public:
    */
   bool IsEqual(const vtkVariant& other) const;
 
-  //@{
+  ///@{
   /**
    * Compare two variants for equality, greater than, and less than.
    * These operators use the value represented by the variant instead
@@ -406,7 +391,7 @@ public:
   bool operator>(const vtkVariant& other) const;
   bool operator<=(const vtkVariant& other) const;
   bool operator>=(const vtkVariant& other) const;
-  //@}
+  ///@}
 
   friend VTKCOMMONCORE_EXPORT ostream& operator<<(ostream& os, const vtkVariant& val);
 
@@ -416,7 +401,6 @@ private:
 
   union {
     vtkStdString* String;
-    vtkUnicodeString* UnicodeString;
     float Float;
     double Double;
     char Char;

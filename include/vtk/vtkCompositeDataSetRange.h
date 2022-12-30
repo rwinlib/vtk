@@ -25,8 +25,6 @@
 
 #include <cassert>
 
-#ifndef __VTK_WRAP__
-
 namespace vtk
 {
 
@@ -144,11 +142,17 @@ public:
 protected:
   // Note: This takes ownership of iter and manages its lifetime.
   // Iter should not be used past this point by the caller.
-  CompositeDataSetIterator(SmartIterator&& iter) noexcept : Iterator(std::move(iter)) {}
+  CompositeDataSetIterator(SmartIterator&& iter) noexcept
+    : Iterator(std::move(iter))
+  {
+  }
 
   // Note: Iterators constructed using this ctor will be considered
   // 'end' iterators via a sentinal pattern.
-  CompositeDataSetIterator() noexcept : Iterator(nullptr) {}
+  CompositeDataSetIterator() noexcept
+    : Iterator(nullptr)
+  {
+  }
 
 private:
   void CopyState(InternalIterator* source)
@@ -159,6 +163,10 @@ private:
       this->Iterator->SetDataSet(source->GetDataSet());
       this->Iterator->SetSkipEmptyNodes(source->GetSkipEmptyNodes());
       this->Iterator->InitTraversal();
+      // XXX(empty iteration): This assert fires for some iterator
+      // implementations if iterating over an empty dataset (because in this
+      // case, `begin() == end()`. This assert needs work.
+      // assert(!source->IsDoneWithTraversal());
       this->AdvanceTo(source->GetCurrentFlatIndex());
     }
   }
@@ -261,8 +269,6 @@ private:
 
 }
 } // end namespace vtk::detail
-
-#endif // __VTK_WRAP__
 
 #endif // vtkCompositeDataSetRange_h
 

@@ -26,7 +26,7 @@
  * * REQUEST_INFORMATION: The producers have to provide information about
  * the contents of the composite dataset in this pass.
  * Sources that can produce more than one piece (note that a piece is
- * different than a block; each piece consistes of 0 or more blocks) should
+ * different than a block; each piece consists of 0 or more blocks) should
  * set CAN_HANDLE_PIECE_REQUEST.
  *
  * * REQUEST_UPDATE_EXTENT: This pass is identical to the one implemented
@@ -157,7 +157,7 @@ protected:
 
   virtual void ExecuteEach(vtkCompositeDataIterator* iter, vtkInformationVector** inInfoVec,
     vtkInformationVector* outInfoVec, int compositePort, int connection, vtkInformation* request,
-    std::vector<vtkSmartPointer<vtkCompositeDataSet> >& compositeOutput);
+    std::vector<vtkSmartPointer<vtkCompositeDataSet>>& compositeOutput);
 
   std::vector<vtkDataObject*> ExecuteSimpleAlgorithmForBlock(vtkInformationVector** inInfoVec,
     vtkInformationVector* outInfoVec, vtkInformation* inInfo, vtkInformation* request,
@@ -183,7 +183,7 @@ protected:
    * vtkUniformGrid given vtkUniformGrid inputs) or if it should be downgraded
    * to a vtkMultiBlockDataSet.
    */
-  std::vector<vtkSmartPointer<vtkDataObject> > CreateOutputCompositeDataSet(
+  std::vector<vtkSmartPointer<vtkDataObject>> CreateOutputCompositeDataSet(
     vtkCompositeDataSet* input, int compositePort, int numOutputPorts);
 
   // Override this to handle UPDATE_COMPOSITE_INDICES().

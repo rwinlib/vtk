@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    vtkToolkits.h.in
+  Module:    vtkToolkits.h
 
   Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -15,30 +15,9 @@
 #ifndef vtkToolkits_h
 #define vtkToolkits_h
 
-/* This header is configured by VTK's build process.  */
-
-/* The Hybrid and VolumeRendering kits are now switched with Rendering.  */
-#ifdef VTK_USE_RENDERING
-# define VTK_USE_HYBRID
-# define VTK_USE_VOLUMERENDERING
-#endif
-
-/* #undef VTK_USE_VOLUMEPRO_1000 */
-
-/*--------------------------------------------------------------------------*/
-/* Other Configuration Options                                              */
-
-/* Whether VTK is using vfw32 and if it supports video capture */
-/* #undef VTK_USE_VIDEO_FOR_WINDOWS */
-/* #undef VTK_VFW_SUPPORTS_CAPTURE */
-
-/* Whether FFMPEG is found or not  */
-/* #undef VTK_USE_FFMPEG_ENCODER */
-
-/* Whether the user has linked in the MPEG2 library or not  */
-/* #undef VTK_USE_MPEG2_ENCODER */
-
-/* Whether the user wants to use the Ogg/Theora encoder or not */
-/* #undef VTK_USE_OGGTHEORA_ENCODER */
+#pragma message                                                                                    \
+  "vtkToolkits.h is deprecated. For `VTK_DEBUG_LEAKS`, check `vtkDebug.h`, for video support, see `vtkIOMovieConfigure.h` and `vtkIOVideoConfigure.h`."
 
 #endif
+
+// VTK-HeaderTest-Exclude: vtkToolkits.h

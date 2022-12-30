@@ -19,7 +19,10 @@
  * vtkPointData is a class that is used to represent and manipulate
  * point attribute data (e.g., scalars, vectors, normals, texture
  * coordinates, etc.) Most of the functionality is handled by
- * vtkDataSetAttributes
+ * vtkDataSetAttributes.
+ *
+ * By default, `GhostTypesToSkip` is set to `DUPLICATEPOINT | HIDDENPOINT`.
+ * See `vtkDataSetAttributes` for the definition of those constants.
  */
 
 #ifndef vtkPointData_h
@@ -27,19 +30,22 @@
 
 #include "vtkCommonDataModelModule.h" // For export macro
 #include "vtkDataSetAttributes.h"
+#include "vtkDeprecation.h" // for VTK_DEPRECATED_IN_9_1_0
 
 class VTKCOMMONDATAMODEL_EXPORT vtkPointData : public vtkDataSetAttributes
 {
 public:
   static vtkPointData* New();
+  static vtkPointData* ExtendedNew();
 
   vtkTypeMacro(vtkPointData, vtkDataSetAttributes);
   void PrintSelf(ostream& os, vtkIndent indent) override;
+  VTK_DEPRECATED_IN_9_1_0("Use vtkFieldData::NullData")
   void NullPoint(vtkIdType ptId);
 
 protected:
-  vtkPointData() {}
-  ~vtkPointData() override {}
+  vtkPointData();
+  ~vtkPointData() override = default;
 
 private:
   vtkPointData(const vtkPointData&) = delete;

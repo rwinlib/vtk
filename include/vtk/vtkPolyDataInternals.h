@@ -57,8 +57,6 @@
 #ifndef vtkPolyDataInternals_h
 #define vtkPolyDataInternals_h
 
-#ifndef __VTK_WRAP__ // Don't wrap this class.
-
 #include "vtkCommonDataModelModule.h" // For export macro
 
 #include "vtkCellType.h"
@@ -156,7 +154,10 @@ struct VTKCOMMONDATAMODEL_EXPORT TaggedCellId
   TaggedCellId() noexcept = default;
 
   // Create a TaggedCellId from a cellId and cell type (e.g. VTK_TRIANGLE).
-  TaggedCellId(vtkIdType cellId, VTKCellType cellType) noexcept : Value(Encode(cellId, cellType)) {}
+  TaggedCellId(vtkIdType cellId, VTKCellType cellType) noexcept
+    : Value(Encode(cellId, cellType))
+  {
+  }
 
   TaggedCellId(const TaggedCellId&) noexcept = default;
   TaggedCellId(TaggedCellId&&) noexcept = default;
@@ -283,7 +284,6 @@ private:
 
 } // end namespace vtkPolyData_detail
 
-#endif // __VTK_WRAP__
 #endif // vtkPolyDataInternals.h
 
 // VTK-HeaderTest-Exclude: vtkPolyDataInternals.h

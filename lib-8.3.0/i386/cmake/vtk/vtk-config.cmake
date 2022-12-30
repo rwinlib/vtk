@@ -32,6 +32,10 @@ The following variables are provided by this module:
     are also targets and may be linked to using `target_link_libraries`.
   * `VTK_AUTOINIT_INCLUDE`: The header to include for access to VTK's autoinit
     support.
+  * `VTK_QT_VERSION`: The major version of Qt used by VTK if Qt support enabled.
+  * `VTK_QML_DIR`: Where VTK's QML plugins live if QML support is enabled.
+  * `VTK_ENABLE_VR_COLLABORATION`: Is VR collaboration enabled when VR is enabled.
+  * `VTK_SMP_BACKENDS`: The list of available SMP backends.
 
 For more information about the Python in use by VTK, the `VTK_PYTHON_VERSION`
 variable may be used to query the `find_package(Python)` that VTK performs
@@ -49,8 +53,15 @@ data.
 [VTK module API]: TODO: Link to hosted documentation.
 #]==]
 
+if (CMAKE_VERSION VERSION_LESS "3.12")
+  set("${CMAKE_FIND_PACKAGE_NAME}_FOUND" 0)
+  set("${CMAKE_FIND_PACKAGE_NAME}_NOT_FOUND_MESSAGE"
+    "VTK requires CMake 3.12 in order to reliably be used.")
+  return ()
+endif ()
+
 cmake_policy(PUSH)
-cmake_policy(VERSION 3.8...3.12)
+cmake_policy(VERSION 3.12)
 
 set(_vtk_temp_variables)
 set(_vtk_real_components)
@@ -65,7 +76,7 @@ foreach (_vtk_component IN LISTS "${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS")
           "The new name for the '${_vtk_component}' component is "
           "'${_vtk_actual_component}'")
       endif ()
-    elseif (${CMAKE_FIND_PACKAGE_NAME}_FIND_VERSION VERSION_LESS 8.90)
+    elseif (${CMAKE_FIND_PACKAGE_NAME}_FIND_VERSION VERSION_LESS "8.90")
       # Ignore for compatibility.
     else ()
       message(FATAL_ERROR
@@ -102,14 +113,15 @@ unset(_vtk_module_import_prefix)
 list(INSERT CMAKE_PREFIX_PATH 0
   "${${CMAKE_FIND_PACKAGE_NAME}_PREFIX_PATH}")
 
-set("${CMAKE_FIND_PACKAGE_NAME}_VERSION" "9.0.1")
+set("${CMAKE_FIND_PACKAGE_NAME}_VERSION" "9.2.2")
 set("${CMAKE_FIND_PACKAGE_NAME}_MAJOR_VERSION" "9")
-set("${CMAKE_FIND_PACKAGE_NAME}_MINOR_VERSION" "0")
-set("${CMAKE_FIND_PACKAGE_NAME}_BUILD_VERSION" "1")
+set("${CMAKE_FIND_PACKAGE_NAME}_MINOR_VERSION" "2")
+set("${CMAKE_FIND_PACKAGE_NAME}_BUILD_VERSION" "2")
 set("${CMAKE_FIND_PACKAGE_NAME}_LEGACY_REMOVE" "OFF")
 set("${CMAKE_FIND_PACKAGE_NAME}_AUTOINIT_INCLUDE" "\"vtkAutoInit.h\"")
+set("${CMAKE_FIND_PACKAGE_NAME}_SMP_BACKENDS" "STDThread;Sequential")
 
-set("${CMAKE_FIND_PACKAGE_NAME}_AVAILABLE_COMPONENTS" "IOXML;vtksys;IOXMLParser;expat;IOLegacy;IOCore;doubleconversion;lz4;lzma;utf8;zlib;CommonExecutionModel;CommonDataModel;CommonSystem;CommonMisc;CommonTransforms;CommonMath;CommonCore;kwiml")
+set("${CMAKE_FIND_PACKAGE_NAME}_AVAILABLE_COMPONENTS" "IOXML;vtksys;IOXMLParser;expat;IOLegacy;IOCore;doubleconversion;lz4;lzma;utf8;zlib;CommonExecutionModel;CommonDataModel;pugixml;CommonSystem;CommonMisc;exprtk;CommonTransforms;CommonMath;kissfft;CommonCore;kwiml")
 
 unset("${CMAKE_FIND_PACKAGE_NAME}_FOUND")
 set("${CMAKE_FIND_PACKAGE_NAME}_HAS_VTKm" "OFF")
@@ -128,10 +140,40 @@ include("${CMAKE_CURRENT_LIST_DIR}/${CMAKE_FIND_PACKAGE_NAME}-vtk-module-propert
 
 include("${CMAKE_CURRENT_LIST_DIR}/vtk-find-package-helpers.cmake" OPTIONAL)
 
+# Ensure that the right OpenGL preference is in place when finding the OpenGL
+# libraries.
+if (0) # vtk_opengl_preference_set
+  if (DEFINED OpenGL_GL_PREFERENCE)
+    set("${CMAKE_FIND_PACKAGE_NAME}_OpenGL_GL_PREFERENCE_save" "${OpenGL_GL_PREFERENCE}")
+  endif ()
+  set(OpenGL_GL_PREFERENCE "")
+endif ()
+
 include("${CMAKE_CURRENT_LIST_DIR}/${CMAKE_FIND_PACKAGE_NAME}-vtk-module-find-packages.cmake")
+
+if (0) # vtk_opengl_preference_set
+  if (DEFINED "${CMAKE_FIND_PACKAGE_NAME}_OpenGL_GL_PREFERENCE_save")
+    set(OpenGL_GL_PREFERENCE "${${CMAKE_FIND_PACKAGE_NAME}_OpenGL_GL_PREFERENCE_save}")
+    unset("${CMAKE_FIND_PACKAGE_NAME}_OpenGL_GL_PREFERENCE_save")
+  else ()
+    unset(OpenGL_GL_PREFERENCE)
+  endif ()
+endif ()
 
 if (TARGET VTK::opengl)
   set(VTK_OPENGL_HAS_EGL "")
+endif ()
+
+if (TARGET VTK::RenderingVR)
+  set("${CMAKE_FIND_PACKAGE_NAME}_ENABLE_VR_COLLABORATION" "")
+endif ()
+
+if () # VTK_QT_VERSION
+  set("${CMAKE_FIND_PACKAGE_NAME}_QT_VERSION" "")
+endif ()
+
+if (0) # vtk_has_qml
+  set("${CMAKE_FIND_PACKAGE_NAME}_QML_DIR" "${${CMAKE_FIND_PACKAGE_NAME}_PREFIX_PATH}/lib/qml")
 endif ()
 
 include("${CMAKE_CURRENT_LIST_DIR}/vtkModule.cmake")
@@ -284,8 +326,10 @@ if (NOT DEFINED "${CMAKE_FIND_PACKAGE_NAME}_FOUND")
     vtkjava)
   # Build the `_LIBRARIES` variable.
   foreach (_vtk_component IN LISTS _vtk_found_components)
-    list(APPEND "${CMAKE_FIND_PACKAGE_NAME}_LIBRARIES"
-      "${CMAKE_FIND_PACKAGE_NAME}::${_vtk_component}")
+    if (TARGET "${CMAKE_FIND_PACKAGE_NAME}::${_vtk_component}")
+      list(APPEND "${CMAKE_FIND_PACKAGE_NAME}_LIBRARIES"
+        "${CMAKE_FIND_PACKAGE_NAME}::${_vtk_component}")
+    endif ()
   endforeach ()
   unset(_vtk_component)
   unset(_vtk_found_components)
@@ -306,7 +350,7 @@ unset(_vtk_temp_variables)
 # Compatibility with old code.
 if (NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_VERSION)
   set(VTK_USE_FILE "${CMAKE_CURRENT_LIST_DIR}/vtk-use-file-deprecated.cmake")
-elseif (${CMAKE_FIND_PACKAGE_NAME}_FIND_VERSION VERSION_LESS 8.90)
+elseif (${CMAKE_FIND_PACKAGE_NAME}_FIND_VERSION VERSION_LESS "8.90")
   set(VTK_USE_FILE "${CMAKE_CURRENT_LIST_DIR}/vtk-use-file-compat.cmake")
 else ()
   set(VTK_USE_FILE "${CMAKE_CURRENT_LIST_DIR}/vtk-use-file-error.cmake")

@@ -18,9 +18,9 @@
 /* Note: this file is deliberately both valid C and valid C++. */
 
 #define VTK_MAJOR_VERSION 9
-#define VTK_MINOR_VERSION 0
-#define VTK_BUILD_VERSION 1
-#define VTK_VERSION "9.0.1"
+#define VTK_MINOR_VERSION 2
+#define VTK_BUILD_VERSION 2
+#define VTK_VERSION "9.2.2"
 
 #define VTK_SOURCE_VERSION "vtk version " VTK_VERSION
 

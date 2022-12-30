@@ -63,4 +63,3 @@ vtkArrayDownCast_FastCastMacro(vtkTypeInt32Array);
 #undef vtkTypeArrayBase
 
 #endif
-// VTK-HeaderTest-Exclude: vtkTypedArray.h.in

@@ -25,6 +25,16 @@ set_target_properties(VTK::CommonCore PROPERTIES
 list(APPEND _IMPORT_CHECK_TARGETS VTK::CommonCore )
 list(APPEND _IMPORT_CHECK_FILES_FOR_VTK::CommonCore "${_IMPORT_PREFIX}/lib/libvtkCommonCore.a" )
 
+# Import target "VTK::kissfft" for configuration "Release"
+set_property(TARGET VTK::kissfft APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+set_target_properties(VTK::kissfft PROPERTIES
+  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "C"
+  IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libvtkkissfft.a"
+  )
+
+list(APPEND _IMPORT_CHECK_TARGETS VTK::kissfft )
+list(APPEND _IMPORT_CHECK_FILES_FOR_VTK::kissfft "${_IMPORT_PREFIX}/lib/libvtkkissfft.a" )
+
 # Import target "VTK::CommonMath" for configuration "Release"
 set_property(TARGET VTK::CommonMath APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 set_target_properties(VTK::CommonMath PROPERTIES
@@ -64,6 +74,16 @@ set_target_properties(VTK::CommonSystem PROPERTIES
 
 list(APPEND _IMPORT_CHECK_TARGETS VTK::CommonSystem )
 list(APPEND _IMPORT_CHECK_FILES_FOR_VTK::CommonSystem "${_IMPORT_PREFIX}/lib/libvtkCommonSystem.a" )
+
+# Import target "VTK::pugixml" for configuration "Release"
+set_property(TARGET VTK::pugixml APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+set_target_properties(VTK::pugixml PROPERTIES
+  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
+  IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libvtkpugixml.a"
+  )
+
+list(APPEND _IMPORT_CHECK_TARGETS VTK::pugixml )
+list(APPEND _IMPORT_CHECK_FILES_FOR_VTK::pugixml "${_IMPORT_PREFIX}/lib/libvtkpugixml.a" )
 
 # Import target "VTK::CommonDataModel" for configuration "Release"
 set_property(TARGET VTK::CommonDataModel APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)

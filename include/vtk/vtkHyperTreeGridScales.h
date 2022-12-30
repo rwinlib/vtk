@@ -29,7 +29,8 @@
 #ifndef vtkHyperTreeGridScales_h
 #define vtkHyperTreeGridScales_h
 
-#include <vector> // For std::vector
+#include <cstring> // For memcpy
+#include <vector>  // For std::vector
 
 class vtkHyperTreeGridScales
 {
@@ -103,6 +104,9 @@ public:
   unsigned int GetCurrentFailLevel() const { return this->CurrentFailLevel; }
 
 private:
+  vtkHyperTreeGridScales(const vtkHyperTreeGridScales&) = delete;
+  vtkHyperTreeGridScales& operator=(const vtkHyperTreeGridScales&) = delete;
+
   /**
    * JB Update the cell scales table afin de repondre que la
    * table puisse retourner la taille de la maille pour ce niveau

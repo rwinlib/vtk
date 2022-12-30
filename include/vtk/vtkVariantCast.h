@@ -36,7 +36,7 @@
 #ifndef vtkVariantCast_h
 #define vtkVariantCast_h
 
-#include "vtkUnicodeString.h"
+#include "vtkVariant.h"
 #include <typeinfo> // for warnings
 
 template <typename T>
@@ -139,15 +139,6 @@ inline vtkStdString vtkVariantCast<vtkStdString>(const vtkVariant& value, bool* 
     *valid = true;
 
   return value.ToString();
-}
-
-template <>
-inline vtkUnicodeString vtkVariantCast<vtkUnicodeString>(const vtkVariant& value, bool* valid)
-{
-  if (valid)
-    *valid = true;
-
-  return value.ToUnicodeString();
 }
 
 template <>

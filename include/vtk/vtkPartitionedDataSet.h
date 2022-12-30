@@ -57,7 +57,7 @@ public:
   int GetDataObjectType() override { return VTK_PARTITIONED_DATA_SET; }
 
   /**
-   * Set the number of partitionss. This will cause allocation if the new number of
+   * Set the number of partitions. This will cause allocation if the new number of
    * partitions is greater than the current size. All new partitions are initialized to
    * null.
    */
@@ -68,13 +68,13 @@ public:
    */
   unsigned int GetNumberOfPartitions();
 
-  //@{
+  ///@{
   /**
    * Returns the partition at the given index.
    */
   vtkDataSet* GetPartition(unsigned int idx);
   vtkDataObject* GetPartitionAsDataObject(unsigned int idx);
-  //@}
+  ///@}
 
   /**
    * Sets the data object as the given partition. The total number of partitions will
@@ -94,13 +94,13 @@ public:
    */
   vtkInformation* GetMetaData(unsigned int idx) { return this->Superclass::GetChildMetaData(idx); }
 
-  //@{
+  ///@{
   /**
    * Retrieve an instance of this class from an information object.
    */
   static vtkPartitionedDataSet* GetData(vtkInformation* info);
   static vtkPartitionedDataSet* GetData(vtkInformationVector* v, int i = 0);
-  //@}
+  ///@}
 
   /**
    * Unhiding superclass method.
@@ -127,6 +127,12 @@ public:
 protected:
   vtkPartitionedDataSet();
   ~vtkPartitionedDataSet() override;
+
+  /**
+   * vtkPartitionedDataSet cannot contain non-leaf children. This ensures that
+   * we don't accidentally create them in CopyStructure
+   */
+  vtkDataObjectTree* CreateForCopyStructure(vtkDataObjectTree*) override { return nullptr; }
 
 private:
   vtkPartitionedDataSet(const vtkPartitionedDataSet&) = delete;

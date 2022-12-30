@@ -16,8 +16,6 @@
 #ifndef vtkCollectionRange_h
 #define vtkCollectionRange_h
 
-#ifndef __VTK_WRAP__
-
 #include "vtkCollection.h"
 #include "vtkMeta.h"
 #include "vtkRange.h"
@@ -118,7 +116,10 @@ public:
   using pointer = typename Superclass::pointer;
   using reference = typename Superclass::reference;
 
-  CollectionIterator() noexcept : Element(nullptr) {}
+  CollectionIterator() noexcept
+    : Element(nullptr)
+  {
+  }
 
   CollectionIterator(const CollectionIterator& o) noexcept = default;
   CollectionIterator& operator=(const CollectionIterator& o) noexcept = default;
@@ -159,7 +160,10 @@ public:
   friend struct CollectionRange<CollectionType>;
 
 protected:
-  CollectionIterator(vtkCollectionElement* element) noexcept : Element(element) {}
+  CollectionIterator(vtkCollectionElement* element) noexcept
+    : Element(element)
+  {
+  }
 
 private:
   void Increment() noexcept
@@ -192,7 +196,11 @@ struct CollectionRange
   using const_reference = ItemType*;
   using value_type = ItemType*;
 
-  CollectionRange(CollectionType* coll) noexcept : Collection(coll) { assert(this->Collection); }
+  CollectionRange(CollectionType* coll) noexcept
+    : Collection(coll)
+  {
+    assert(this->Collection);
+  }
 
   CollectionType* GetCollection() const noexcept { return this->Collection; }
 
@@ -226,8 +234,6 @@ private:
 
 }
 } // end namespace vtk::detail
-
-#endif // __VTK_WRAP__
 
 #endif // vtkCollectionRange_h
 

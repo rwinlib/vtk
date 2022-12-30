@@ -49,8 +49,6 @@ public:
    * range between 0<=edgeId<this->GetNumberOfEdges().
    */
   virtual void GetEdgePoints(vtkIdType edgeId, const vtkIdType*& pts) = 0;
-  // @deprecated Replaced by GetEdgePoints(vtkIdType, const vtkIdType*&) as of VTK 9.0
-  VTK_LEGACY(virtual void GetEdgePoints(int edgeId, int*& pts) = 0;);
 
   /**
    * Get the list of vertices that define a face. The list is terminated
@@ -62,8 +60,6 @@ public:
    * @return The number of points in face faceId
    */
   virtual vtkIdType GetFacePoints(vtkIdType faceId, const vtkIdType*& pts) = 0;
-  // @deprecated Replaced by GetFacePoints(vtkIdType, const vtkIdType*&) as of VTK 9.0
-  VTK_LEGACY(virtual void GetFacePoints(int faceId, int*& pts) = 0;);
 
   /**
    * Get the ids of the two adjacent faces to edge of id edgeId.
@@ -176,7 +172,20 @@ public:
    */
   int GetCellDimension() override { return 3; }
 
-  //@{
+  /**
+   * Inflates the cell. Each face is displaced following its normal by a
+   * distance of value `dist`. If dist is negative, then the cell shrinks.
+   * The resulting cell edges / faces are colinear / coplanar to their previous
+   * self.
+   *
+   * Degenerate parts of the 3D cell are unchanged. This happens a points to
+   * which incident faces are homogeneous to a plane, to a line, or to a point.
+   *
+   * \return 1 if inflation was successful, 0 if no inflation was performed
+   */
+  int Inflate(double dist) override;
+
+  ///@{
   /**
    * Set the tolerance for merging clip intersection points that are near
    * the vertices of cells. This tolerance is used to prevent the generation
@@ -184,7 +193,7 @@ public:
    */
   vtkSetClampMacro(MergeTolerance, double, 0.0001, 0.25);
   vtkGetMacro(MergeTolerance, double);
-  //@}
+  ///@}
 
 protected:
   vtkCell3D();

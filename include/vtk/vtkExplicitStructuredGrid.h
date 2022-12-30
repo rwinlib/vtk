@@ -44,6 +44,11 @@
  * then j (0 <= j <= dims[1] - 2), then k ( 0 <= k <= dims[2] - 2) where dims[]
  * are the dimensions of the grid in the i-j-k topological directions.
  * The number of cells is (dims[0] - 1) * (dims[1] - 1) * (dims[2] - 1).
+ *
+ * In order for an ESG to be usable by most other ESG specific filters,
+ * it is needed to call the ComputeFacesConnectivityFlagsArray method.
+ * It is also recommended to call CheckAndReorderFaces method to fix any
+ * faces issues in the dataset.
  */
 
 #ifndef vtkExplicitStructuredGrid_h
@@ -62,21 +67,21 @@ class vtkHexahedron;
 class VTKCOMMONDATAMODEL_EXPORT vtkExplicitStructuredGrid : public vtkPointSet
 {
 public:
-  //@{
+  ///@{
   /**
    * Standard methods for instantiation, type information, and printing.
    */
   static vtkExplicitStructuredGrid* New();
   vtkTypeMacro(vtkExplicitStructuredGrid, vtkPointSet);
   void PrintSelf(ostream& os, vtkIndent indent) override;
-  //@}
+  ///@}
 
   /**
    * Return what type of dataset this is.
    */
   int GetDataObjectType() override { return VTK_EXPLICIT_STRUCTURED_GRID; }
 
-  //@{
+  ///@{
   /**
    * Standard vtkDataSet API methods. See vtkDataSet for more information.
    */
@@ -86,32 +91,33 @@ public:
   void GetCell(vtkIdType cellId, vtkGenericCell* cell) override;
   void GetCellBounds(vtkIdType cellId, double bounds[6]) override;
   int GetCellType(vtkIdType cellId) override;
+  vtkIdType GetCellSize(vtkIdType cellId) override;
   vtkIdType GetNumberOfCells() override;
   void GetCellPoints(vtkIdType cellId, vtkIdList* ptIds) override;
   void GetPointCells(vtkIdType ptId, vtkIdList* cellIds) override;
   int GetMaxCellSize() override { return 8; } // hexahedron is the largest
   void GetCellNeighbors(vtkIdType cellId, vtkIdList* ptIds, vtkIdList* cellIds) override;
-  //@}
+  ///@}
 
   /**
    * Copy the geometric and topological structure of an input poly data object.
    */
   void CopyStructure(vtkDataSet* ds) override;
 
-  //@{
+  ///@{
   /**
    * Shallow and Deep copy.
    */
   void ShallowCopy(vtkDataObject* src) override;
   void DeepCopy(vtkDataObject* src) override;
-  //@}
+  ///@}
 
   /**
    * Return the dimensionality of the data.
    */
   inline int GetDataDimension() { return 3; }
 
-  //@{
+  ///@{
   /**
    * Set/Get the dimensions of this structured dataset in term of number
    * of points along each direction.
@@ -120,7 +126,7 @@ public:
   void SetDimensions(int i, int j, int k);
   void SetDimensions(int dim[3]);
   void GetDimensions(int dim[3]);
-  //@}
+  ///@}
 
   /**
    * Computes the cell dimensions according to internal point dimensions.
@@ -134,7 +140,7 @@ public:
    */
   int GetExtentType() override { return VTK_3D_EXTENT; }
 
-  //@{
+  ///@{
   /**
    * Set/Get the extent of this structured dataset in term of number
    * of points along each direction.
@@ -145,34 +151,49 @@ public:
   void SetExtent(int x0, int x1, int y0, int y1, int z0, int z1);
   void SetExtent(int extent[6]);
   vtkGetVector6Macro(Extent, int);
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   /**
    * Set/Get the cell array defining hexahedron.
    */
   void SetCells(vtkCellArray* cells);
   vtkGetObjectMacro(Cells, vtkCellArray);
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   /**
    * Create/Get upward links from points to cells that use each point.
    * Enables topologically complex queries.
    */
   void BuildLinks();
   vtkGetObjectMacro(Links, vtkAbstractCellLinks);
-  //@}
+  ///@}
 
   /**
    * Get direct raw pointer to the 8 points indices of an hexahedra.
+   *
+   * Note: This method MAY NOT be thread-safe. (See GetCellAtId at vtkCellArray)
    */
   vtkIdType* GetCellPoints(vtkIdType cellId);
 
   /**
    * More efficient method to obtain cell points.
+   *
+   * Note: This method MAY NOT be thread-safe. (See GetCellAtId at vtkCellArray)
    */
   void GetCellPoints(vtkIdType cellId, vtkIdType& npts, vtkIdType*& pts);
+
+  /**
+   * More efficient method to obtain cell points.
+   *
+   * This function MAY use ptIds, which is an object that is created by each thread,
+   * to guarantee thread safety.
+   *
+   * Note: This method is thread-safe. (See GetCellAtId at vtkCellArray)
+   */
+  void GetCellPoints(
+    vtkIdType cellId, vtkIdType& npts, vtkIdType const*& pts, vtkIdList* ptIds) override;
 
   /**
    * Get cell neighbors of the cell for every faces.
@@ -201,19 +222,21 @@ public:
   vtkIdType ComputeCellId(int i, int j, int k, bool adjustForExtent = true);
 
   /**
-   * Compute the faces connectivity flags array.
+   * Compute the faces connectivity flags array. This method should
+   * be called after the construction if the ESG is to be used by
+   * other filters.
    */
   void ComputeFacesConnectivityFlagsArray();
 
-  //@{
+  ///@{
   /**
    * Set/Get the name of the faces connectivity flags array.
    */
   vtkSetStringMacro(FacesConnectivityFlagsArrayName);
   vtkGetStringMacro(FacesConnectivityFlagsArrayName);
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   /**
    * Methods for supporting blanking of cells. Blanking turns on or off
    * cells in the structured grid.
@@ -222,7 +245,7 @@ public:
    */
   void BlankCell(vtkIdType cellId);
   void UnBlankCell(vtkIdType cellId);
-  //@}
+  ///@}
 
   /**
    * Returns true if one or more cells are blanked, false otherwise.
@@ -248,7 +271,7 @@ public:
    */
   bool HasAnyGhostCells();
 
-  //@{
+  ///@{
   /**
    * Reallocates and copies to set the Extent to the UpdateExtent.
    * This is used internally when the exact extent is requested,
@@ -257,15 +280,15 @@ public:
   void Crop(const int* updateExtent) override;
   virtual void Crop(
     vtkExplicitStructuredGrid* input, const int* updateExtent, bool generateOriginalCellIds);
-  //@}
+  ///@}
 
-  //@{
+  ///@{
   /**
    * Retrieve an instance of this class from an information object.
    */
   static vtkExplicitStructuredGrid* GetData(vtkInformation* info);
   static vtkExplicitStructuredGrid* GetData(vtkInformationVector* v, int i = 0);
-  //@}
+  ///@}
 
   /**
    * Return the actual size of the data in kilobytes. This number
@@ -289,7 +312,7 @@ public:
    */
   void CheckAndReorderFaces();
 
-  //@{
+  ///@{
   /**
    * Normally called by pipeline executives or algorithms only. This method
    * computes the ghost arrays for a given dataset. The zeroExt argument
@@ -297,7 +320,7 @@ public:
    */
   using vtkDataSet::GenerateGhostArray;
   void GenerateGhostArray(int zeroExt[6], bool cellOnly) override;
-  //@}
+  ///@}
 
 protected:
   vtkExplicitStructuredGrid();
@@ -307,7 +330,7 @@ protected:
    * Compute the range of the scalars and cache it into ScalarRange
    * only if the cache became invalid (ScalarRangeComputeTime).
    */
-  virtual void ComputeScalarRange() override;
+  void ComputeScalarRange() override;
 
   /**
    * Internal method used by DeepCopy and ShallowCopy.

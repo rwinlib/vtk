@@ -17,7 +17,7 @@
  * @brief   A subclass of ImageData.
  *
  * StructuredPoints is a subclass of ImageData that requires the data extent
- * to exactly match the update extent. Normall image data allows that the
+ * to exactly match the update extent. Normal image data allows that the
  * data extent may be larger than the update extent.
  * StructuredPoints also defines the origin differently that vtkImageData.
  * For structured points the origin is the location of first point.
@@ -37,6 +37,7 @@ class VTKCOMMONDATAMODEL_EXPORT vtkStructuredPoints : public vtkImageData
 public:
   static vtkStructuredPoints* New();
   vtkTypeMacro(vtkStructuredPoints, vtkImageData);
+  void PrintSelf(ostream& os, vtkIndent indent) override;
 
   /**
    * To simplify filter superclasses,
@@ -45,7 +46,7 @@ public:
 
 protected:
   vtkStructuredPoints();
-  ~vtkStructuredPoints() override {}
+  ~vtkStructuredPoints() override = default;
 
 private:
   vtkStructuredPoints(const vtkStructuredPoints&) = delete;
@@ -53,5 +54,3 @@ private:
 };
 
 #endif
-
-// VTK-HeaderTest-Exclude: vtkStructuredPoints.h
